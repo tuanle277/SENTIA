@@ -1,0 +1,306 @@
+{
+  "stress": [
+    {
+      "id": "stress_breathing_1",
+      "priority": 1,
+      "condition": "context.recent_activity == 'sedentary'",
+      "suggestion_text": "High stress detected. Let's take a moment. Try a 2-minute 'box breathing' exercise to reset: inhale for 4s, hold for 4s, exhale for 4s, hold for 4s.",
+      "suggestion_type": "breathing_exercise"
+    },
+    {
+      "id": "stress_walk_1",
+      "priority": 2,
+      "condition": "context.time_of_day in ['morning', 'afternoon'] and context.weather == 'clear'",
+      "suggestion_text": "Your stress levels appear elevated. A short 10-minute walk outside can help clear your mind.",
+      "suggestion_type": "physical_activity"
+    },
+    {
+      "id": "stress_mindful_moment_1",
+      "priority": 3,
+      "condition": "True",
+      "suggestion_text": "Feeling stressed? Take 60 seconds for a mindful moment. Notice five things you can see and four things you can feel right now.",
+      "suggestion_type": "mindfulness"
+    },
+    {
+      "id": "stress_hydrate_1",
+      "priority": 4,
+      "condition": "True",
+      "suggestion_text": "Sometimes stress is linked to dehydration. A glass of water can be a simple way to help your body and mind reset.",
+      "suggestion_type": "hydration"
+    },
+    {
+      "id": "stress_music_1",
+      "priority": 5,
+      "condition": "True",
+      "suggestion_text": "High stress detected. Consider putting on a favorite calm song or some ambient sounds for a few minutes.",
+      "suggestion_type": "environmental"
+    },
+    {
+      "id": "stress_evening_wind_down_1",
+      "priority": 1,
+      "condition": "context.time_of_day == 'evening'",
+      "suggestion_text": "High stress before bed can affect sleep. Let's wind down. Consider a relaxing activity like reading a book instead of scrolling.",
+      "suggestion_type": "sleep_hygiene"
+    },
+    {
+      "id": "stress_evening_stretch_1",
+      "priority": 2,
+      "condition": "context.time_of_day == 'evening'",
+      "suggestion_text": "Sensing some tension from the day. A few gentle stretches can help release physical stress before you sleep.",
+      "suggestion_type": "physical_activity"
+    },
+    {
+      "id": "stress_evening_journal_1",
+      "priority": 3,
+      "condition": "context.time_of_day == 'evening'",
+      "suggestion_text": "A busy mind can make it hard to sleep. Try jotting down your thoughts or a to-do list for tomorrow to clear your head.",
+      "suggestion_type": "cognitive"
+    },
+    {
+      "id": "stress_work_break_1",
+      "priority": 1,
+      "condition": "context.time_of_day in ['morning', 'afternoon'] and context.day_of_week in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']",
+      "suggestion_text": "Work seems intense right now. The Pomodoro technique is great for this: work focused for 25 minutes, then take a 5-minute break. Ready to try?",
+      "suggestion_type": "productivity"
+    },
+    {
+      "id": "stress_work_refocus_1",
+      "priority": 2,
+      "condition": "context.time_of_day in ['morning', 'afternoon'] and context.day_of_week in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']",
+      "suggestion_text": "Feeling overwhelmed? Step away from your screen for just 2 minutes. A change of scenery can boost your focus.",
+      "suggestion_type": "break"
+    },
+    {
+      "id": "stress_work_planning_1",
+      "priority": 3,
+      "condition": "context.time_of_day == 'morning' and context.day_of_week in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']",
+      "suggestion_text": "Sensing some morning stress. Take 60 seconds to write down your top 3 priorities for the day. A clear plan can reduce anxiety.",
+      "suggestion_type": "cognitive"
+    },
+    {
+      "id": "stress_commute_1",
+      "priority": 1,
+      "condition": "context.is_commuting == True",
+      "suggestion_text": "Traffic can be stressful. Try loosening your grip on the steering wheel and take a few deep breaths at the next red light.",
+      "suggestion_type": "mindfulness"
+    },
+    {
+      "id": "stress_commute_podcast_1",
+      "priority": 2,
+      "condition": "context.is_commuting == True",
+      "suggestion_text": "Sensing stress on your commute. How about switching to an interesting podcast or a relaxing audiobook?",
+      "suggestion_type": "environmental"
+    },
+    {
+      "id": "stress_social_1",
+      "priority": 10,
+      "condition": "context.day_of_week in ['Saturday', 'Sunday']",
+      "suggestion_text": "Feeling stressed on the weekend? Connecting with a friend or loved one can be a powerful mood booster.",
+      "suggestion_type": "social"
+    },
+    {
+      "id": "stress_tense_shoulders_1",
+      "priority": 6,
+      "condition": "context.recent_activity == 'sedentary'",
+      "suggestion_text": "Stress often builds in our shoulders. Try slowly rolling them up to your ears, then letting them drop. Repeat 5 times.",
+      "suggestion_type": "physical_activity"
+    }
+  ],
+  "neutral": [
+    {
+      "id": "neutral_reinforce_1",
+      "priority": 1,
+      "condition": "True",
+      "suggestion_text": "You seem to be in a calm and focused state. Great job managing your day!",
+      "suggestion_type": "positive_reinforcement"
+    },
+    {
+      "id": "neutral_maintain_1",
+      "priority": 2,
+      "condition": "True",
+      "suggestion_text": "This is a great moment of calm. Take a second to appreciate it and lock in this feeling.",
+      "suggestion_type": "mindfulness"
+    },
+    {
+      "id": "neutral_checkin_1",
+      "priority": 3,
+      "condition": "True",
+      "suggestion_text": "Your body is in a relaxed state. How are you feeling mentally right now?",
+      "suggestion_type": "self_reflection"
+    },
+    {
+      "id": "neutral_hydrate_1",
+      "priority": 4,
+      "condition": "True",
+      "suggestion_text": "Everything looks balanced. A good time to stay hydrated with a glass of water.",
+      "suggestion_type": "hydration"
+    },
+    {
+      "id": "neutral_plan_next_1",
+      "priority": 5,
+      "condition": "context.time_of_day in ['morning', 'afternoon']",
+      "suggestion_text": "You're in a great state of flow. What's the next important task you want to tackle?",
+      "suggestion_type": "productivity"
+    },
+    {
+      "id": "neutral_gratitude_1",
+      "priority": 6,
+      "condition": "context.time_of_day == 'evening'",
+      "suggestion_text": "Feeling calm this evening. What's one thing that went well today that you're grateful for?",
+      "suggestion_type": "cognitive"
+    },
+    {
+      "id": "neutral_post_workout_1",
+      "priority": 1,
+      "condition": "context.recent_activity == 'active'",
+      "suggestion_text": "Your heart rate is returning to a great resting state after your activity. Excellent recovery!",
+      "suggestion_type": "positive_reinforcement"
+    },
+    {
+      "id": "neutral_weekend_1",
+      "priority": 1,
+      "condition": "context.day_of_week in ['Saturday', 'Sunday']",
+      "suggestion_text": "Looks like you're having a relaxing weekend. Enjoy this downtime!",
+      "suggestion_type": "positive_reinforcement"
+    },
+    {
+      "id": "neutral_deep_work_1",
+      "priority": 2,
+      "condition": "context.recent_activity == 'sedentary' and context.day_of_week not in ['Saturday', 'Sunday']",
+      "suggestion_text": "Your physiological signs are calm and steady—a perfect state for focused, deep work.",
+      "suggestion_type": "productivity"
+    },
+    {
+      "id": "neutral_mindful_eating_1",
+      "priority": 1,
+      "condition": "context.time_of_day in ['lunch', 'dinner']",
+      "suggestion_text": "You're in a calm state, which is great for digestion. Try to eat slowly and mindfully, savoring each bite.",
+      "suggestion_type": "mindfulness"
+    }
+  ],
+  "sedentary_period": [
+    {
+      "id": "sedentary_stretch_1",
+      "priority": 1,
+      "condition": "True",
+      "suggestion_text": "Time for a quick stretch! Reaching for the sky can do wonders for a stiff back.",
+      "suggestion_type": "physical_activity"
+    },
+    {
+      "id": "sedentary_walk_1",
+      "priority": 2,
+      "condition": "True",
+      "suggestion_text": "You've been sitting for a while. A brief walk around the room will get your circulation going.",
+      "suggestion_type": "physical_activity"
+    },
+    {
+      "id": "sedentary_eye_strain_1",
+      "priority": 3,
+      "condition": "True",
+      "suggestion_text": "Been focused on a screen? Try the 20-20-20 rule: every 20 minutes, look at something 20 feet away for 20 seconds.",
+      "suggestion_type": "health_tip"
+    },
+    {
+      "id": "sedentary_posture_1",
+      "priority": 4,
+      "condition": "True",
+      "suggestion_text": "A quick posture check-in: are your shoulders relaxed and your back straight?",
+      "suggestion_type": "health_tip"
+    },
+    {
+      "id": "sedentary_water_1",
+      "priority": 5,
+      "condition": "True",
+      "suggestion_text": "This is a great time to stand up, stretch, and grab a glass of water.",
+      "suggestion_type": "hydration"
+    },
+    {
+      "id": "sedentary_stairs_1",
+      "priority": 6,
+      "condition": "context.location == 'office' or context.location == 'home_multi-level'",
+      "suggestion_text": "How about a quick trip up and down the stairs to re-energize?",
+      "suggestion_type": "physical_activity"
+    }
+  ],
+  "poor_sleep_detected": [
+    {
+      "id": "sleep_morning_light_1",
+      "priority": 1,
+      "condition": "context.time_of_day == 'morning'",
+      "suggestion_text": "It looks like last night's sleep was restless. Getting some morning sunlight for 10-15 minutes can help reset your body clock for a better night tonight.",
+      "suggestion_type": "health_tip"
+    },
+    {
+      "id": "sleep_hydrate_morning_1",
+      "priority": 2,
+      "condition": "context.time_of_day == 'morning'",
+      "suggestion_text": "After a tough night's sleep, starting the day with a large glass of water is extra important.",
+      "suggestion_type": "hydration"
+    },
+    {
+      "id": "sleep_avoid_caffeine_1",
+      "priority": 3,
+      "condition": "True",
+      "suggestion_text": "Since sleep was a challenge last night, consider avoiding caffeine after 2 PM today to help your body prepare for a more restful night.",
+      "suggestion_type": "health_tip"
+    },
+    {
+      "id": "sleep_light_activity_1",
+      "priority": 4,
+      "condition": "True",
+      "suggestion_text": "Feeling tired after a poor night's sleep? A light walk can actually boost your energy more than a nap.",
+      "suggestion_type": "physical_activity"
+    },
+    {
+      "id": "sleep_plan_wind_down_1",
+      "priority": 5,
+      "condition": "context.time_of_day in ['afternoon', 'evening']",
+      "suggestion_text": "To get back on track tonight, let's plan a relaxing wind-down routine. Maybe a warm bath or some light reading about an hour before bed?",
+      "suggestion_type": "sleep_hygiene"
+    },
+    {
+      "id": "sleep_nap_caution_1",
+      "priority": 6,
+      "condition": "context.time_of_day == 'afternoon'",
+      "suggestion_text": "Feeling the urge for a nap after a restless night? If you do, try to keep it short (20-30 minutes) to avoid impacting tonight's sleep.",
+      "suggestion_type": "health_tip"
+    }
+  ],
+  "high_resting_hr": [
+    {
+      "id": "hr_hydrate_1",
+      "priority": 1,
+      "condition": "True",
+      "suggestion_text": "Your resting heart rate seems a bit elevated. Dehydration can be a cause, so make sure you're drinking enough water.",
+      "suggestion_type": "hydration"
+    },
+    {
+      "id": "hr_breathing_1",
+      "priority": 2,
+      "condition": "True",
+      "suggestion_text": "Noticing a high resting heart rate. A few moments of slow, deep breathing can help activate your body's relaxation response.",
+      "suggestion_type": "breathing_exercise"
+    },
+    {
+      "id": "hr_check_caffeine_1",
+      "priority": 3,
+      "condition": "True",
+      "suggestion_text": "Your resting heart rate is a little high. Have you had more caffeine than usual today?",
+      "suggestion_type": "self_reflection"
+    },
+    {
+      "id": "hr_leg_up_1",
+      "priority": 4,
+      "condition": "context.time_of_day == 'evening' and context.recent_activity == 'sedentary'",
+      "suggestion_text": "A simple way to help lower your heart rate is to lie down and elevate your legs for a few minutes.",
+      "suggestion_type": "health_tip"
+    },
+    {
+      "id": "hr_monitor_1",
+      "priority": 5,
+      "condition": "True",
+      "suggestion_text": "Your resting heart rate is trending higher than your average. It's something to keep an eye on over the next few days.",
+      "suggestion_type": "monitoring"
+    }
+  ]
+}
