@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-aura/data_processing/feature_extractor.py
-
-This is the final, production-ready script to process the raw WESAD dataset 
-for all subjects and generate a clean feature dataset for model training.
-"""
-
 import os
 import pickle
 import pandas as pd
@@ -131,7 +123,7 @@ def process_subject_data(subject_id, base_path, window_size_sec=15, window_shift
 
 # --- Main script execution block ---
 if __name__ == '__main__':
-    WESAD_BASE_PATH = "./WESAD"
+    WESAD_BASE_PATH = "./data/WESAD"
     current_dir = os.path.dirname(os.path.abspath(__file__))
     output_dir = os.path.join(current_dir, '..', '..', 'data', 'processed')
     os.makedirs(output_dir, exist_ok=True)
