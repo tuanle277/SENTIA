@@ -1,0 +1,1347 @@
+[
+    {
+        "action_title": "Adjust Step Goal",
+        "action_description": "If you are worried about feeling sick, you can pick a lower number of steps.",
+        "category": "General"
+    },
+    {
+        "action_title": "Smile",
+        "action_description": "Smile.",
+        "category": "General"
+    },
+    {
+        "action_title": "Get Steps In",
+        "action_description": "Get your steps in tonight.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Hydrate",
+        "action_description": "Stay hydrated!",
+        "category": "Nutrition"
+    },
+    {
+        "action_title": "Reduce Self-Pressure",
+        "action_description": "Don't put too much pressure on yourself today.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Hydrate",
+        "action_description": "Drink plenty of water.",
+        "category": "Nutrition"
+    },
+    {
+        "action_title": "Get Steps In",
+        "action_description": "Keep getting your steps in today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Get Steps In",
+        "action_description": "Get your steps in today!",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Re-sync Fitbit",
+        "action_description": "Re-sync the Fitbit to your phone using the Fitbit app.",
+        "category": "General"
+    },
+    {
+        "action_title": "Daily Walk Goal",
+        "action_description": "Walk Monday - Friday 3,000 steps/day sometime between 3-6pm.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Walk 4,000 Steps Today",
+        "action_description": "Walk 4,000 steps today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Walk 3,500 Steps Daily",
+        "action_description": "Walk 3,500 steps per day from Monday to Friday.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Open Fitbit App",
+        "action_description": "Open the Fitbit app and find the picture of your \"charge 2 fitbit\".",
+        "category": "General"
+    },
+    {
+        "action_title": "Walk 7,000 Steps",
+        "action_description": "Walk 7,000 steps Monday, Wednesday and Thursday.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Do Workout",
+        "action_description": "Do that workout tonight at 7pm.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Get Steps",
+        "action_description": "Remember to get your 3,500 steps in today if you haven't already.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Pace Yourself",
+        "action_description": "Do not push yourself too hard.",
+        "category": "General"
+    },
+    {
+        "action_title": "Seek Fitbit Connection Help",
+        "action_description": "Ask someone to help you connect the Fitbit with the Fitbit app on your phone.",
+        "category": "Social"
+    },
+    {
+        "action_title": "Get Your Steps In",
+        "action_description": "Get your steps in this morning.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Sync Fitbit App",
+        "action_description": "If you get a chance, open the Fitbit app and sync it.",
+        "category": "General"
+    },
+    {
+        "action_title": "Walk 7000 Steps",
+        "action_description": "Walk 7000 steps today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Choose Low-Impact Exercise",
+        "action_description": "Work on an elliptical or do another exercise that doesn't involve too much pressure on your legs.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Manually Sync Fitbit",
+        "action_description": "Manually sync your fitbit through the app by sliding your finger down the fitbit app.",
+        "category": "General"
+    },
+    {
+        "action_title": "Increase Steps",
+        "action_description": "Get your steps if you haven't already reached 9,000.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Take a Long Walk",
+        "action_description": "Consider taking a long walk if you have time.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Open Fitbit App",
+        "action_description": "Open the Fitbit app.",
+        "category": "General"
+    },
+    {
+        "action_title": "Check Fitbit App Settings",
+        "action_description": "Make sure your Bluetooth is on. Open the Fitbit app, click on 'charge 2', and then scroll down to turn on all-day sync.",
+        "category": "General"
+    },
+    {
+        "action_title": "Stop exercise logging",
+        "action_description": "Long-press the button again to stop recording an exercise.",
+        "category": "General"
+    },
+    {
+        "action_title": "Hydrate",
+        "action_description": "Drink plenty of water if you are out, especially when it's hot.",
+        "category": "Nutrition"
+    },
+    {
+        "action_title": "Refresh Fitbit App",
+        "action_description": "Go into your Fitbit app and refresh it by pulling the screen down.",
+        "category": "General"
+    },
+    {
+        "action_title": "Brisk Walk",
+        "action_description": "Walk for 15 minutes briskly.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Get Steps In",
+        "action_description": "You can still get the steps in.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Skip Weekly Goal",
+        "action_description": "If you want, you can skip this week so you can get better.",
+        "category": "General"
+    },
+    {
+        "action_title": "Pace Yourself (Pain Management)",
+        "action_description": "If experiencing pain, take it very slow and don't overdo it.",
+        "category": "General"
+    },
+    {
+        "action_title": "Tap screen to select exercise",
+        "action_description": "Tap the Charge 2's screen until you see the exercise (StairMaster).",
+        "category": "General"
+    },
+    {
+        "action_title": "Sync Fitbit",
+        "action_description": "Manually sync your Fitbit: go to the Fitbit app and swipe your finger down.",
+        "category": "General"
+    },
+    {
+        "action_title": "Lower Goal",
+        "action_description": "Keep in mind that you can lower your goal for this week if you still are feeling under the weather.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Get Steps",
+        "action_description": "Get your steps in this morning.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Set Lower Goal",
+        "action_description": "Set a much lower goal for this week.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Wear Fitbit",
+        "action_description": "Wear your fitbit.",
+        "category": "General"
+    },
+    {
+        "action_title": "Take a Deep Breath",
+        "action_description": "Don't forget to take a deep breath.",
+        "category": "Mindfulness"
+    },
+    {
+        "action_title": "Reach Daily Step Goal",
+        "action_description": "Remember to get your 13,000 steps in today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Press and hold device button",
+        "action_description": "Press and hold the button for 10 to 12 seconds until you see the Fitbit icon and a version number on the screen.",
+        "category": "Environmental"
+    },
+    {
+        "action_title": "Walk 8000 Steps Daily",
+        "action_description": "Walk 8,000 steps/ day Monday - Friday for this week.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Morning Walk",
+        "action_description": "Do your 30 minutes of walking (4,000 steps) this morning.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Go for a Walk",
+        "action_description": "Walk for an hour around 12pm to aim for 6,000 steps.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Watch video tutorial",
+        "action_description": "You can also follow this video: https://www.youtube.com/watch?v=dmMmg8sZjC8",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Walk on the Spot",
+        "action_description": "Walk on the spot in front of a favorite TV show.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Perform Lunges",
+        "action_description": "Get some lunges in at home or at work while walking.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Resync Fitbit",
+        "action_description": "Go into your Fitbit app and resync your Fitbit.",
+        "category": "General"
+    },
+    {
+        "action_title": "Daily Fruit and Veggie Intake",
+        "action_description": "Try to eat at least 5 servings of FRESH veggies and FRESH fruit each day.",
+        "category": "Nutrition"
+    },
+    {
+        "action_title": "Walk Outside",
+        "action_description": "Get outside and walk some today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Adjust Pace for Back Pain",
+        "action_description": "Take a little slower with your back hurting.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Hydrate",
+        "action_description": "Don't forget to drink water if you are out in the heat.",
+        "category": "Nutrition"
+    },
+    {
+        "action_title": "Get Fresh Air",
+        "action_description": "Get outside and get some fresh air.",
+        "category": "Environmental"
+    },
+    {
+        "action_title": "Get Steps",
+        "action_description": "If you haven't already, get your steps for the day.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Identify Barriers & Plan Solutions",
+        "action_description": "Think of any barriers that might make it hard to reach your goal and how you can overcome them or create a backup plan.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Take a Brisk Walk",
+        "action_description": "Do a brisk walk for 15 minutes.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Continue Working Towards Goal",
+        "action_description": "Keep working towards your goal today and tomorrow.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Maintain 3,000 Steps",
+        "action_description": "Keep the 3,000 steps/day the same and just do it from Wednesday - Friday.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Hydrate",
+        "action_description": "Drink plenty of water in this heat.",
+        "category": "Nutrition"
+    },
+    {
+        "action_title": "Manually Sync Fitbit",
+        "action_description": "Manually sync your Fitbit by going into the Fitbit app, clicking on the Fitbit Charge 2, and then sliding your finger down to sync it.",
+        "category": "General"
+    },
+    {
+        "action_title": "Walk 5,000 steps (Weekdays)",
+        "action_description": "Walk 5,000 steps/day Monday - Friday.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Daily Steps Goal",
+        "action_description": "Get your 12,000 steps in today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Release device button",
+        "action_description": "Let go of the button.",
+        "category": "Environmental"
+    },
+    {
+        "action_title": "Monitor Body and Stop",
+        "action_description": "Stop at any time that you feel like you are heated or light headed.",
+        "category": "General"
+    },
+    {
+        "action_title": "Get Steps In",
+        "action_description": "Get your steps in.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Get Steps In",
+        "action_description": "If you're up for it, get those steps in.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Designate Rest Days",
+        "action_description": "On any day that you feel tired or not good, pick that as your off day from your goals.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Daily Steps Goal",
+        "action_description": "Remember to get your 12,000 steps in today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Grant Breaks on Tough Days",
+        "action_description": "If you have a tough day, allow yourself to take a break from your goals.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Get Steps In",
+        "action_description": "It's a great day to get those steps in.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Review Website",
+        "action_description": "Take a look at this website: https://www.youtube.com/watch?v=WSd_dnI_cTo",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Assess Goal Confidence",
+        "action_description": "On a scale from 0-10, assess how confident you are that you can reach this goal (0 is not at all confident and 10 is very confident).",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Achieve Daily Goal",
+        "action_description": "Try to hit your daily goal of 4000 or higher every day.",
+        "category": "General"
+    },
+    {
+        "action_title": "Indoor Hallway Walk",
+        "action_description": "Walk the hallways of your apartment building/home.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Practice Self-Acceptance",
+        "action_description": "If you don't reach your usual step count today due to rain, remember that it's okay because your goal for this week is 2000.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Morning Walk",
+        "action_description": "Continue to walk 40 minutes in the morning (possibly 30 minutes and then 10 minutes) from 6a - 9a.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Walk in place",
+        "action_description": "Walk in place for 5 minutes.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Utilize Nice Weather",
+        "action_description": "Take advantage of this nice weather if you can!",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Walk 3,000 Steps Daily",
+        "action_description": "Walk 3,000 steps today through Thursday.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Sync Fitbit Manually",
+        "action_description": "Manually sync your Fitbit by opening the Fitbit app and sliding your finger down.",
+        "category": "General"
+    },
+    {
+        "action_title": "Reach Daily Step Goal",
+        "action_description": "Remember to get your 14,000 steps in today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Walk Early",
+        "action_description": "Try to walk early in the day before the heat is bad and you feel too tired.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Stair Steps",
+        "action_description": "Use the bottom step of the stairs to do steps.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Check Bluetooth",
+        "action_description": "Make sure Bluetooth is on.",
+        "category": "General"
+    },
+    {
+        "action_title": "Wear Fitbit",
+        "action_description": "Wear your fitbit today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Set Achievable Goal",
+        "action_description": "Set a goal that you are 100% sure you can meet.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Check Fitbit App",
+        "action_description": "Go into the Fitbit app on your phone.",
+        "category": "General"
+    },
+    {
+        "action_title": "Rate Goal Confidence",
+        "action_description": "Rate your confidence for your goal this week on a scale of 1-10.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Achieve Daily Step Goal",
+        "action_description": "Your goal for today is to achieve 7000 steps.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Recharge Fitbit",
+        "action_description": "Recharge your Fitbit battery.",
+        "category": "General"
+    },
+    {
+        "action_title": "Reflect on Obstacles",
+        "action_description": "Think about your week -- is there anything that might prevent you from reaching that goal?",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Drink Water",
+        "action_description": "Make sure you are drinking plenty of water.",
+        "category": "Nutrition"
+    },
+    {
+        "action_title": "Resync Fitbit",
+        "action_description": "Resync your Fitbit.",
+        "category": "General"
+    },
+    {
+        "action_title": "Check Bluetooth",
+        "action_description": "Make sure your Bluetooth is on.",
+        "category": "General"
+    },
+    {
+        "action_title": "Get Steps In",
+        "action_description": "Just a reminder to get your steps in!",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Go for a walk",
+        "action_description": "Do your walking this morning.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Walk Outside",
+        "action_description": "Get outside today and walk.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Use Elliptical",
+        "action_description": "Every day this week, before you leave for work, use your elliptical for 5 minutes.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Sync Fitbit",
+        "action_description": "Try to sync your Fitbit by going into the app and pulling the screen down.",
+        "category": "General"
+    },
+    {
+        "action_title": "Listen to Music",
+        "action_description": "Listen to some good music today.",
+        "category": "General"
+    },
+    {
+        "action_title": "Morning Walk",
+        "action_description": "Walk this morning.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Plug cable to computer",
+        "action_description": "Plug your charging cable into your computer.",
+        "category": "Environmental"
+    },
+    {
+        "action_title": "Set Fitbit Goal",
+        "action_description": "Set up your week 4 Fitbit goal.",
+        "category": "General"
+    },
+    {
+        "action_title": "Do What You Can",
+        "action_description": "Do what you can.",
+        "category": "General"
+    },
+    {
+        "action_title": "Resync App Data",
+        "action_description": "Go into the app and pull the screen down so it resyncs.",
+        "category": "General"
+    },
+    {
+        "action_title": "Sync Fitbit",
+        "action_description": "Sync your Fitbit by opening the Fitbit app and swiping your finger down the screen.",
+        "category": "General"
+    },
+    {
+        "action_title": "Wear Fitbit",
+        "action_description": "Wear your fitbit today.",
+        "category": "Environmental"
+    },
+    {
+        "action_title": "Push button for exercise screen",
+        "action_description": "When it's time to work out, push the button on the side of your Charge 2 until the exercise screen appears.",
+        "category": "General"
+    },
+    {
+        "action_title": "Walk 5,500 Steps Weekly",
+        "action_description": "Walk 5,500 steps 5 days sometime this week (before next Monday).",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Deep Breath",
+        "action_description": "Take a deep breath.",
+        "category": "Mindfulness"
+    },
+    {
+        "action_title": "Walk 3,000 steps (Vacation)",
+        "action_description": "Keep it at 3,000 steps/day during your vacation Monday - Friday.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Workout Tonight",
+        "action_description": "Get your work out in tonight at 7pm.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Manually Sync Fitbit",
+        "action_description": "Manually sync your Fitbit by clicking on the Fitbit app and then pulling the screen down.",
+        "category": "General"
+    },
+    {
+        "action_title": "Go for a Walk",
+        "action_description": "Walk this morning.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Take Water",
+        "action_description": "Don't forget to take water if you walk at lunch.",
+        "category": "Nutrition"
+    },
+    {
+        "action_title": "Get Steps In",
+        "action_description": "Make sure you get those steps in today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Release Worry",
+        "action_description": "Don't worry about it too much.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Focus on Recovery",
+        "action_description": "Just concentrate on getting better.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Start exercise logging",
+        "action_description": "Long-press the button to start logging an exercise.",
+        "category": "General"
+    },
+    {
+        "action_title": "Get 4,600 Steps",
+        "action_description": "Don't forget to get your 4,600 steps in today!",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Rest Today",
+        "action_description": "Have today to rest.",
+        "category": "General"
+    },
+    {
+        "action_title": "Walk Hallways",
+        "action_description": "Walk the hallways of your home/apartment.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Stay Cool",
+        "action_description": "Stay cool.",
+        "category": "Environmental"
+    },
+    {
+        "action_title": "Walk 7,000 Steps",
+        "action_description": "Walk 7,000 steps today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Reflect on Past Performance",
+        "action_description": "Think about how easy or hard it was to get in your 4000 steps as you set your goal for this week.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Set Confident Goal",
+        "action_description": "Define a goal for the upcoming week that you are 100% confident you can achieve.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Elliptical Workout",
+        "action_description": "Use your elliptical for 5 minutes every day this week.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Walk Outside",
+        "action_description": "If the weather is nice tomorrow or on the weekend, get your steps in outside.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Morning Walk",
+        "action_description": "Walk 40 minutes in the morning between 6a - 9a (or later if schedule gets busy) Monday - Saturday.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Prioritize Recovery",
+        "action_description": "If you're not feeling good, just focus on getting better.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Hydrate",
+        "action_description": "Make sure you are drinking plenty water.",
+        "category": "Nutrition"
+    },
+    {
+        "action_title": "Rest and Recover",
+        "action_description": "Take it easy.",
+        "category": "General"
+    },
+    {
+        "action_title": "Go for a Walk",
+        "action_description": "Do your 30 minutes of walking (4,000 steps).",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Resync Device",
+        "action_description": "Resync your phone with your Fitbit.",
+        "category": "General"
+    },
+    {
+        "action_title": "Sync Fitbit App",
+        "action_description": "Manually sync your Fitbit on the app when you get a chance.",
+        "category": "General"
+    },
+    {
+        "action_title": "Find Walking Tunes",
+        "action_description": "Find some good tunes to listen to while you walk.",
+        "category": "General"
+    },
+    {
+        "action_title": "Drink Water",
+        "action_description": "Make sure you drink plenty of water.",
+        "category": "Nutrition"
+    },
+    {
+        "action_title": "Set Achievable Goal",
+        "action_description": "Pick a goal that is a 10 on a scale of 1 to 10 with 10 being completely sure you can do it.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Achieve Step Goal",
+        "action_description": "Get your 4,500 steps in today and tomorrow.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Practice Mindfulness",
+        "action_description": "Focus on mindfulness today.",
+        "category": "Mindfulness"
+    },
+    {
+        "action_title": "Charge Fitbit",
+        "action_description": "Your Fitbit battery is low, so charge it.",
+        "category": "Environmental"
+    },
+    {
+        "action_title": "Restart Fitbit",
+        "action_description": "Push the button on the side of the Fitbit down and hold it down for about 15 seconds.",
+        "category": "General"
+    },
+    {
+        "action_title": "Resync Fitbit",
+        "action_description": "Go into the Fitbit app and resync your Fitbit by pulling the screen down.",
+        "category": "General"
+    },
+    {
+        "action_title": "Increase Reminders",
+        "action_description": "Consider increasing the frequency or number of reminders for your goal.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Get Steps In",
+        "action_description": "Get your steps in for the day. Walking briskly can help you achieve your goal.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Stay Hydrated",
+        "action_description": "Make sure you are drinking plenty of water.",
+        "category": "Nutrition"
+    },
+    {
+        "action_title": "Avoid Overexertion",
+        "action_description": "Don't push yourself TOO hard.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Adjust Goal Days",
+        "action_description": "Consider reducing the number of days for your goal.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Take a Walk",
+        "action_description": "Take [Name] for a walk today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Go Outside and Enjoy Weather",
+        "action_description": "Get outside to enjoy this weather.",
+        "category": "Environmental"
+    },
+    {
+        "action_title": "Walk 10,000 steps (This Week)",
+        "action_description": "Walk 10,000 steps/day Monday - Saturday.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Sync Fitbit App",
+        "action_description": "Manually sync your Fitbit by opening the app and swiping your finger down.",
+        "category": "General"
+    },
+    {
+        "action_title": "Update Staff on Progress",
+        "action_description": "Update the staff on your progress since this is the last week.",
+        "category": "Social"
+    },
+    {
+        "action_title": "Morning Walk",
+        "action_description": "Walk 30 minutes and then 10 minutes this morning sometime before 9am.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Refresh Fitbit App",
+        "action_description": "When you go into the Fitbit app, you can pull the screen down to refresh it.",
+        "category": "General"
+    },
+    {
+        "action_title": "Get 11,000 Steps",
+        "action_description": "Remember to get your 11,000 steps in today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Walk 20 minutes",
+        "action_description": "Walk 20 minutes tomorrow - Tuesday at the school track.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Initiate Fitbit Sync",
+        "action_description": "Touch the picture of your Fitbit device at the top of the screen and pull down.",
+        "category": "General"
+    },
+    {
+        "action_title": "Exercise Early",
+        "action_description": "Consider exercising in the early morning to avoid the heat.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Wear Fitbit",
+        "action_description": "Put on your Fitbit so you can capture your walking today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Set Achievable Step Goal",
+        "action_description": "Pick a number for daily steps that you KNOW you can do.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Get Morning Steps In",
+        "action_description": "Get your steps in this morning.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Achieve Step Goal",
+        "action_description": "Walk 5,000 steps tomorrow and Thursday.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Maintain Focus",
+        "action_description": "Keep focusing on reaching your goal.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Rate Confidence",
+        "action_description": "Rate how confident you are about the goal on a scale of 1-10.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Wear Fitbit",
+        "action_description": "Put your Fitbit on.",
+        "category": "General"
+    },
+    {
+        "action_title": "Get Your Steps In",
+        "action_description": "Get your steps in.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Resync Fitbit App",
+        "action_description": "Open the app and try to resync your phone with your Fitbit.",
+        "category": "General"
+    },
+    {
+        "action_title": "Walk Outside",
+        "action_description": "Get some walks outside if you can.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Take a walk",
+        "action_description": "Walk this morning.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Early Steps",
+        "action_description": "Get your 4500 steps in earlier in the day.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Get Steps In",
+        "action_description": "Get your steps in sometime before 9am this morning.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Do Workout",
+        "action_description": "Do that workout at 7pm tonight.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Release Fitbit Goal Worry",
+        "action_description": "Don't worry about the Fitbit goal at all.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Sync Fitbit App",
+        "action_description": "Make sure the Fitbit app on your phone is synced with your Fitbit.",
+        "category": "General"
+    },
+    {
+        "action_title": "Walk 5,000 Steps Today",
+        "action_description": "Get 5,000 steps in today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Confirm Receipt",
+        "action_description": "Reply 'yes' if you see this message.",
+        "category": "Social"
+    },
+    {
+        "action_title": "Sync Fitbit Device",
+        "action_description": "Sync your Fitbit device when you get a chance.",
+        "category": "Environmental"
+    },
+    {
+        "action_title": "Take 3000 Steps",
+        "action_description": "Get in your 3000 steps today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Drink Water",
+        "action_description": "Drink plenty of water when you are out and walking.",
+        "category": "Nutrition"
+    },
+    {
+        "action_title": "Stay Hydrated",
+        "action_description": "Definitely stay hydrated.",
+        "category": "Nutrition"
+    },
+    {
+        "action_title": "Relax",
+        "action_description": "Relax.",
+        "category": "General"
+    },
+    {
+        "action_title": "Walk at Lunch",
+        "action_description": "Walk at lunch.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Walk 4500 Steps Daily",
+        "action_description": "Walk 4500 steps/ day Monday - Friday throughout the day this week.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Get Steps In",
+        "action_description": "Get your steps in this morning.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Turn On Bluetooth",
+        "action_description": "Make sure your Bluetooth is turned on.",
+        "category": "Environmental"
+    },
+    {
+        "action_title": "Walk 7000 Steps",
+        "action_description": "Walk 7000 steps on Saturday and Monday.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Get Steps In",
+        "action_description": "Keep getting those steps in today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Practice Self-Kindness",
+        "action_description": "Be kind to yourself.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Plug device into cable",
+        "action_description": "Plug your Charge into the charging cable.",
+        "category": "Environmental"
+    },
+    {
+        "action_title": "Sync Fitbit App",
+        "action_description": "Pull your finger down the screen within the Fitbit app to sync your device.",
+        "category": "General"
+    },
+    {
+        "action_title": "Elliptical Workout",
+        "action_description": "Do 5 minutes on the elliptical this morning.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Take the Stairs",
+        "action_description": "Take the stairs instead of elevators.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Elliptical Workout",
+        "action_description": "Use the elliptical for 5 minutes before you leave for work this morning.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Wear Fitbit",
+        "action_description": "Don't forget to put on your fitbit today.",
+        "category": "General"
+    },
+    {
+        "action_title": "Listen to Your Body",
+        "action_description": "Listen to your body.",
+        "category": "Mindfulness"
+    },
+    {
+        "action_title": "Reach 1,000 Steps",
+        "action_description": "Reach 1,000 steps today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Go for a Walk",
+        "action_description": "Get your 40 minutes of walking in.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Sync Fitbit",
+        "action_description": "Manually sync your Fitbit.",
+        "category": "General"
+    },
+    {
+        "action_title": "Stop When Overexerted",
+        "action_description": "Stop if it's too much.",
+        "category": "General"
+    },
+    {
+        "action_title": "Take One Day at a Time",
+        "action_description": "Approach your tasks and challenges by focusing on just one day at a time.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Check Fitbit All-Day Sync",
+        "action_description": "Open the Fitbit app, select Account, select your tracker, then make sure the All-Day Sync toggle is turned on.",
+        "category": "Environmental"
+    },
+    {
+        "action_title": "Communicate Walking Progress",
+        "action_description": "You can let them know that you have been walking more.",
+        "category": "Social"
+    },
+    {
+        "action_title": "Set Weekly Goal",
+        "action_description": "Pick a goal for this week that you feel sure you can do.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Maintain Daily Steps",
+        "action_description": "Keep up your physical activity and steps this morning and throughout today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Turn on Bluetooth",
+        "action_description": "Turn on Bluetooth on your device.",
+        "category": "General"
+    },
+    {
+        "action_title": "Achieve 5,000 Steps",
+        "action_description": "Get those 5,000 steps in today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Check Fitbit Sync",
+        "action_description": "Go in and make sure your Fitbit is still synced with your phone.",
+        "category": "General"
+    },
+    {
+        "action_title": "Wear your Fitbit",
+        "action_description": "Don't forget to put on your Fitbit today.",
+        "category": "General"
+    },
+    {
+        "action_title": "Achieve Daily Step Goal",
+        "action_description": "Try to get in 3,500 steps for today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Perform Fitbit App Sync Steps",
+        "action_description": "Go to the Fitbit app, select your Fitbit device (Charge 2), and then slide your finger down the screen.",
+        "category": "Environmental"
+    },
+    {
+        "action_title": "Get Steps In",
+        "action_description": "Get your steps in today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Pace Yourself",
+        "action_description": "Pace yourself as you work to reach your step goal today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Scheduled Walk",
+        "action_description": "Walk at the health club for 30 minutes on either Tuesday or Thursday morning.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Sync Fitbit",
+        "action_description": "Sync your Fitbit by going to the Fitbit app, clicking on your Fitbit (charge 2), and then pulling the screen down.",
+        "category": "General"
+    },
+    {
+        "action_title": "Wear Fitbit",
+        "action_description": "Don't forget to put your fitbit on today.",
+        "category": "General"
+    },
+    {
+        "action_title": "Daily 3,000 Steps",
+        "action_description": "Walk 3,000 steps/ day throughout the day from Tuesday - Friday.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Daily Steps Goal",
+        "action_description": "Start taking 2,000 steps/day Monday through Friday this week.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Reach Daily Step Goal",
+        "action_description": "Try to reach 11,000 steps today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Adjust Goal Steps",
+        "action_description": "Consider reducing the number of steps in your goal.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Use Stairs",
+        "action_description": "If you have stairs in your apartment, go up and down them to get steps in.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Keep Walking",
+        "action_description": "Keep walking.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Elliptical Workout",
+        "action_description": "Do your 5 min on elliptical before you head out.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Sync Fitness Tracker",
+        "action_description": "When you get a chance later today, sync your fitness tracker by opening the Fitbit app and pulling the screen down.",
+        "category": "General"
+    },
+    {
+        "action_title": "Sync Fitbit",
+        "action_description": "Open your Fitbit and manually sync it.",
+        "category": "General"
+    },
+    {
+        "action_title": "Resync Fitbit",
+        "action_description": "Please resync your Fitbit with the app on your phone when you get a chance.",
+        "category": "General"
+    },
+    {
+        "action_title": "Get Steps In",
+        "action_description": "Get those steps in at 8pm.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Prepare for Heat",
+        "action_description": "Mentally prepare for the hot weather today.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Pace Yourself Safely",
+        "action_description": "Stay at a speed that feels safe for you.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Practice Self-Compassion",
+        "action_description": "Be kind to yourself when you hurt.",
+        "category": "Mindfulness"
+    },
+    {
+        "action_title": "Avoid Overexertion",
+        "action_description": "If your leg is hurting - don't push yourself too hard!",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Walk in Place Indoors",
+        "action_description": "If you can't walk outside, stay inside with the AC, watch a movie, and just walk in place.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Walk During Breaks",
+        "action_description": "Take a little walk during your breaks.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Monitor Steps",
+        "action_description": "If you are able to track your steps on your Fitbit, keep an eye on it to see how many steps you can get.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Hit Step Goal",
+        "action_description": "Hit 3,700 steps tomorrow.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Daily Step Goal",
+        "action_description": "Reach 2,000 steps every day Monday through Friday.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Resync Fitbit",
+        "action_description": "When you get a chance just try to resync your Fitbit with the app.",
+        "category": "General"
+    },
+    {
+        "action_title": "Take the stairs",
+        "action_description": "Take the stairs at the L.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Sync Fitbit via App",
+        "action_description": "Sync your Fitbit by opening the app and sliding your finger down.",
+        "category": "General"
+    },
+    {
+        "action_title": "Sync Fitbit App",
+        "action_description": "When you get a chance, open your Fitbit app to manually sync it by sliding your finger down.",
+        "category": "General"
+    },
+    {
+        "action_title": "Elliptical Workout",
+        "action_description": "Do your elliptical for 5 minutes tonight.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Charge Fitbit",
+        "action_description": "Charge your Fitbit.",
+        "category": "General"
+    },
+    {
+        "action_title": "Sync Fitbit App",
+        "action_description": "Open your Fitbit app and then slide your finger down the screen to sync it.",
+        "category": "General"
+    },
+    {
+        "action_title": "Take the Stairs",
+        "action_description": "Take the stairs rather than the elevator.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Get Steps In",
+        "action_description": "Get your steps in for today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Start Again",
+        "action_description": "Start again.",
+        "category": "General"
+    },
+    {
+        "action_title": "Get Daily Steps",
+        "action_description": "Aim to get your 13,000 steps in today.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Morning Walk",
+        "action_description": "Do your 40 minutes of walking this morning.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Do Workout Video",
+        "action_description": "Do a basic workout video on Monday and Wednesday at 7pm.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Walk",
+        "action_description": "Walk this morning.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Stay Dry",
+        "action_description": "Stay dry as they say we are in for some rain over the next few days.",
+        "category": "Environmental"
+    },
+    {
+        "action_title": "Take it Easy",
+        "action_description": "Take it easy.",
+        "category": "General"
+    },
+    {
+        "action_title": "Brainstorm Barrier Solutions",
+        "action_description": "Think of ways that you might overcome those barriers.",
+        "category": "Cognitive"
+    },
+    {
+        "action_title": "Achieve Daily Step Goal",
+        "action_description": "Walk at least 4000 steps each day between today and next Monday.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Drink Water",
+        "action_description": "Drink plenty of water.",
+        "category": "Nutrition"
+    },
+    {
+        "action_title": "Take 6,000 Steps",
+        "action_description": "Today you're shooting for 6,000 steps. Go for it!",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Wear Fitbit Early",
+        "action_description": "Put your Fitbit on as soon as you can once you get up to count all your steps.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Daily Steps Goal",
+        "action_description": "Walk 5,000 steps a day.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Pace Physical Activity",
+        "action_description": "Pace yourself to reach that 13000 goal!",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Turn On Bluetooth",
+        "action_description": "Make sure the Bluetooth is turned on.",
+        "category": "General"
+    },
+    {
+        "action_title": "Prioritize Rest",
+        "action_description": "Don't forget to charge your battery tonight (get adequate rest/sleep).",
+        "category": "General"
+    },
+    {
+        "action_title": "Manually Sync Fitbit",
+        "action_description": "Manually sync your Fitbit.",
+        "category": "General"
+    },
+    {
+        "action_title": "Aim for Step Goal",
+        "action_description": "Remember to aim for your goal of 2,000 steps for tomorrow.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Restart Fitbit App",
+        "action_description": "Try completely closing out the Fitbit app, and then opening it back up.",
+        "category": "General"
+    },
+    {
+        "action_title": "Get 3,000 Steps",
+        "action_description": "Remember to try to get 3,000 steps today, tomorrow, and Sunday.",
+        "category": "Physical Activity"
+    },
+    {
+        "action_title": "Enable Phone Bluetooth",
+        "action_description": "Make sure Bluetooth is enabled on your phone.",
+        "category": "Environmental"
+    },
+    {
+        "action_title": "Sync Fitbit App",
+        "action_description": "Open your Fitbit app and manually sync it.",
+        "category": "General"
+    }
+]

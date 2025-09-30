@@ -769,19 +769,20 @@ def access_all_dreamer_data(subject_id: int, trial_id: int):
 
 # Example usagerin
 if __name__ == '__main__':
-    access_all_dreamer_data(1, 1)
+    # access_all_dreamer_data(1, 1)
 
-    wesad_df = pd.read_csv("./data/processed/features_dataset.csv")
-    dreamer_df = pd.read_csv("./data/processed/dreamer_features_1_1.csv")
-    wesad_cols = {col: col.replace('BVP_', '') for col in wesad_df.columns if col.startswith('BVP_')}
-    wesad_df = wesad_df.rename(columns=wesad_cols)
-    print(wesad_df.shape)
-    print(dreamer_df.shape)
-    # Compare the columns of wesad_df and dreamer_df
-    # Concatenate the two DataFrames
-    # The `sort=False` argument is used to maintain column order
-    merged_df = pd.concat([wesad_df, dreamer_df], ignore_index=True, sort=False)
+    # wesad_df = pd.read_csv("./data/processed/features_dataset.csv")
+    # dreamer_df = pd.read_csv("./data/processed/dreamer_features_1_1.csv")
+    # wesad_cols = {col: col.replace('BVP_', '') for col in wesad_df.columns if col.startswith('BVP_')}
+    # wesad_df = wesad_df.rename(columns=wesad_cols)
+    # print(wesad_df.shape)
+    # print(dreamer_df.shape)
+    # # Compare the columns of wesad_df and dreamer_df
+    # # Concatenate the two DataFrames
+    # # The `sort=False` argument is used to maintain column order
+    # merged_df = pd.concat([wesad_df, dreamer_df], ignore_index=True, sort=False)
 
-    # Fill all NaN values with 0
-    merged_df = merged_df.fillna(0)
-    merged_df.to_csv("./data/processed/merged_features_dataset.csv", index=False)
+    # # Fill all NaN values with 0
+    # merged_df = merged_df.fillna(0)
+    # merged_df.to_csv("./data/processed/merged_features_dataset.csv", index=False)
+    pass

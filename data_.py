@@ -11,7 +11,7 @@ from neurokit2.misc import NeuroKitWarning
 
 warnings.filterwarnings("ignore", category=NeuroKitWarning)
 
-def process_subject_data(subject_id, base_path, window_size_sec=15, window_shift_sec=1):
+def process_subject_data(subject_id, base_path, window_size_sec=1, window_shift_sec=1):
     """
     Loads raw data for a single subject, slides a window over the signals,
     and extracts a feature vector for each window.
