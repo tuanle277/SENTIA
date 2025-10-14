@@ -11,9 +11,20 @@ interface FeatureSnapshot {
   edaMean: number;
   accMagMean: number;
   tempMean: number;
+  stressLabel?: number;
 }
 
 type StressMode = 'not_stressed' | 'stressed';
+type StreamSource = 'simulated' | 'real_all' | 'real_not_stressed' | 'real_stressed';
+
+interface StreamMeta {
+  source: StreamSource;
+  availableRealSamples?: {
+    all: number;
+    notStressed: number;
+    stressed: number;
+  };
+}
 
 interface StressButton {
   mode: StressMode;
@@ -25,6 +36,7 @@ interface StressButton {
 
 interface ActivityControlPanelProps {
   latestFeatures: FeatureSnapshot | null;
+  streamMeta: StreamMeta | null;
 }
 
 const stressStates: StressButton[] = [
@@ -44,17 +56,35 @@ const stressStates: StressButton[] = [
   }
 ];
 
-const DEFAULT_PREDICTION_ENDPOINT = 'http://10.232.253.188:5000/predict';
+const DEFAULT_PREDICTION_ENDPOINT =
+  process.env.NEXT_PUBLIC_STRESS_API_URL ?? 'http://127.0.0.1:8000/predict';
 
-export default function ActivityControlPanel({ latestFeatures }: ActivityControlPanelProps) {
+const REAL_SOURCE_LABELS: Record<Exclude<StreamSource, 'simulated'>, string> = {
+  real_all: 'Real Stream (All Samples)',
+  real_not_stressed: 'Real Stream – Not Stressed',
+  real_stressed: 'Real Stream – Stressed',
+};
+
+const describeRealSource = (source: StreamSource): string | null => {
+  if (source === 'simulated') return null;
+  return REAL_SOURCE_LABELS[source];
+};
+
+export default function ActivityControlPanel({ latestFeatures, streamMeta }: ActivityControlPanelProps) {
   const [activeMode, setActiveMode] = useState<StressMode>('not_stressed');
   const [isChanging, setIsChanging] = useState(false);
   const [isPredicting, setIsPredicting] = useState(false);
   const [predictionResult, setPredictionResult] = useState<string | null>(null);
   const [predictionDetails, setPredictionDetails] = useState<Record<string, unknown> | null>(null);
   const [predictionError, setPredictionError] = useState<string | null>(null);
-  const [streamSource, setStreamSource] = useState<'simulated' | 'real'>('simulated');
+  const [streamSource, setStreamSource] = useState<StreamSource>(streamMeta?.source ?? 'simulated');
   const activeLabel = stressStates.find((state) => state.mode === activeMode)?.label ?? activeMode;
+
+  useEffect(() => {
+    if (streamMeta?.source) {
+      setStreamSource(streamMeta.source);
+    }
+  }, [streamMeta?.source]);
 
   const handleModeChange = async (mode: StressMode) => {
     setIsChanging(true);
@@ -163,28 +193,92 @@ export default function ActivityControlPanel({ latestFeatures }: ActivityControl
     return () => clearInterval(interval);
   }, [featurePayload, isPredicting, runInference]);
 
-  const toggleStreamSource = useCallback(async () => {
-    const next = streamSource === 'simulated' ? 'real' : 'simulated';
-    try {
-      const response = await fetch('/api/stream', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ source: next }),
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to switch stream (status ${response.status})`);
+  const updateStreamSource = useCallback(
+    async (target: StreamSource) => {
+      if (target === streamSource && streamMeta?.source === target) {
+        return;
       }
-      setStreamSource(next);
-      setPredictionResult(null);
-      setPredictionDetails(null);
       setPredictionError(null);
-    } catch (error) {
-      console.error('Failed to toggle stream source', error);
-      setPredictionError('Unable to switch data source. Please try again.');
-    }
-  }, [streamSource]);
+      try {
+        const response = await fetch('/api/stream', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ source: target }),
+        });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          const errorMessage =
+            typeof payload?.error === 'string'
+              ? payload.error
+              : `Failed to switch to ${target.replace(/_/g, ' ')}`;
+          throw new Error(errorMessage);
+        }
+        setStreamSource(target);
+        setPredictionResult(null);
+        setPredictionDetails(null);
+        setPredictionError(null);
+      } catch (error) {
+        console.error('Failed to toggle stream source', error);
+        setPredictionError('Unable to switch data source. Please try again.');
+      }
+    },
+    [streamMeta?.source, streamSource],
+  );
+
+  const togglePrimarySource = useCallback(async () => {
+    const next: StreamSource = streamSource === 'simulated' ? 'real_all' : 'simulated';
+    await updateStreamSource(next);
+  }, [streamSource, updateStreamSource]);
+
+  const realCounts = streamMeta?.availableRealSamples;
+
+  const renderRealSourceSelector = () => (
+    <div className="mt-4">
+      <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Real data slice</p>
+      <div className="flex flex-wrap gap-2">
+        {(['real_all', 'real_not_stressed', 'real_stressed'] as Exclude<
+          StreamSource,
+          'simulated'
+        >[]).map((option) => {
+          const label = REAL_SOURCE_LABELS[option];
+          const count =
+            option === 'real_all'
+              ? realCounts?.all
+              : option === 'real_not_stressed'
+                ? realCounts?.notStressed
+                : realCounts?.stressed;
+          const disabled = typeof count === 'number' ? count === 0 : false;
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => updateStreamSource(option)}
+              disabled={disabled}
+              className={`
+                px-3 py-2 text-xs font-semibold rounded-lg border transition
+                ${
+                  streamSource === option
+                    ? 'border-indigo-400 bg-indigo-500/10 text-indigo-200'
+                    : 'border-gray-600 bg-gray-900 text-gray-300 hover:bg-gray-800'
+                }
+                ${disabled ? 'opacity-40 cursor-not-allowed' : ''}
+              `}
+            >
+              <div>{label}</div>
+              {typeof count === 'number' && (
+                <div className="text-[10px] text-gray-500 mt-1">{count} samples</div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const currentModeDisplay =
+    streamSource === 'simulated' ? activeLabel : describeRealSource(streamSource) ?? 'Real Stream';
 
   return (
     <div className="bg-gray-800 rounded-2xl p-7 shadow-lg border border-gray-700 sticky top-8">
@@ -195,14 +289,18 @@ export default function ActivityControlPanel({ latestFeatures }: ActivityControl
         </p>
         <button
           type="button"
-          onClick={toggleStreamSource}
+          onClick={togglePrimarySource}
           className="mt-4 inline-flex items-center justify-center rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-200 hover:bg-gray-800 transition"
         >
-          {streamSource === 'simulated' ? 'Switch to Real Data Stream' : 'Use Simulated Data'}
+          {streamSource === 'simulated' ? 'Switch to Real Data Stream' : 'Return to Simulated Stream'}
         </button>
         <p className="mt-2 text-xs uppercase tracking-wide text-gray-500">
-          Current source: <span className="text-gray-200">{streamSource}</span>
+          Current source:{' '}
+          <span className="text-gray-200">
+            {streamSource === 'simulated' ? 'Simulated' : describeRealSource(streamSource) ?? 'Real Stream'}
+          </span>
         </p>
+        {streamSource !== 'simulated' && renderRealSourceSelector()}
       </div>
 
       <div className="space-y-3">
@@ -345,7 +443,7 @@ export default function ActivityControlPanel({ latestFeatures }: ActivityControl
           Current Mode
         </div>
         <div className="text-center text-white font-bold mt-2 text-lg">
-          {activeLabel}
+          {currentModeDisplay}
         </div>
       </div>
     </div>

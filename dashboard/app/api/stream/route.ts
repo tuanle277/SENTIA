@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 
 type FeatureKey = 'hrvMeanNN' | 'edaMean' | 'accMagMean' | 'tempMean';
 type StressMode = 'not_stressed' | 'stressed';
+type StreamingSource = 'simulated' | 'real_all' | 'real_not_stressed' | 'real_stressed';
 
 interface FeatureStreamData {
   timestamp: number;
@@ -286,7 +287,9 @@ function loadStressProfiles(): Record<StressMode, StressProfile> {
 }
 
 const stressProfiles = loadStressProfiles();
-const realDataRecords = loadRealDataset();
+const realDataRecordsAll = loadRealDataset();
+const realDataRecordsNotStressed = realDataRecordsAll.filter((item) => item.stressLabel === 0);
+const realDataRecordsStressed = realDataRecordsAll.filter((item) => item.stressLabel === 1);
 
 function randomNormal(mean = 0, std = 1): number {
   if (!Number.isFinite(std) || std <= 0) return mean;
@@ -348,16 +351,36 @@ function generateFeatureData(
 
 let currentStressMode: StressMode = 'not_stressed';
 let currentTimeScale = 1;
-let streamingSource: 'simulated' | 'real' = 'simulated';
-let realDataIndex = 0;
+let streamingSource: StreamingSource = 'simulated';
+const realDataIndexes: Record<StreamingSource, number> = {
+  simulated: 0,
+  real_all: 0,
+  real_not_stressed: 0,
+  real_stressed: 0,
+};
 let simulatedData: FeatureStreamData | undefined;
 
-function getNextRealData(): FeatureStreamData {
-  if (!realDataRecords.length) {
+function getRealDatasetForSource(source: StreamingSource): RealDataRecord[] {
+  switch (source) {
+    case 'real_not_stressed':
+      return realDataRecordsNotStressed;
+    case 'real_stressed':
+      return realDataRecordsStressed;
+    case 'real_all':
+      return realDataRecordsAll;
+    default:
+      return realDataRecordsAll;
+  }
+}
+
+function getNextRealData(source: StreamingSource): FeatureStreamData {
+  const records = getRealDatasetForSource(source);
+  if (!records.length) {
     return generateFeatureData(undefined, currentStressMode);
   }
-  const record = realDataRecords[realDataIndex];
-  realDataIndex = (realDataIndex + 1) % realDataRecords.length;
+  const currentIndex = realDataIndexes[source];
+  const record = records[currentIndex];
+  realDataIndexes[source] = (currentIndex + 1) % records.length;
   return {
     timestamp: Date.now(),
     hrvMeanNN: Number(record.hrvMeanNN.toFixed(3)),
@@ -376,16 +399,25 @@ export async function GET(request: Request) {
   const stream = new ReadableStream({
     async start(controller) {
       const sendData = () => {
-        if (streamingSource === 'real') {
-          simulatedData = undefined;
-        } else {
+        if (streamingSource === 'simulated') {
           simulatedData = generateFeatureData(simulatedData, currentStressMode);
+        } else {
+          simulatedData = undefined;
         }
         const payload =
-          streamingSource === 'real'
-            ? getNextRealData()
-            : (simulatedData ?? generateFeatureData(undefined, currentStressMode));
-        const data = `data: ${JSON.stringify(payload)}\n\n`;
+          streamingSource === 'simulated'
+            ? (simulatedData ?? generateFeatureData(undefined, currentStressMode))
+            : getNextRealData(streamingSource);
+
+        const meta = {
+          source: streamingSource,
+          availableRealSamples: {
+            all: realDataRecordsAll.length,
+            notStressed: realDataRecordsNotStressed.length,
+            stressed: realDataRecordsStressed.length,
+          },
+        };
+        const data = `data: ${JSON.stringify({ ...payload, __meta: meta })}\n\n`;
         controller.enqueue(encoder.encode(data));
       };
 
@@ -428,14 +460,27 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { mode, source } = body as { mode?: StressMode; source?: 'simulated' | 'real' };
+    const { mode, source } = body as { mode?: StressMode; source?: StreamingSource };
 
-    if (source && (source === 'simulated' || source === 'real')) {
-      streamingSource = source;
-      if (streamingSource === 'real') {
-        realDataIndex = 0;
+    if (source) {
+      if (
+        source === 'simulated' ||
+        source === 'real_all' ||
+        source === 'real_not_stressed' ||
+        source === 'real_stressed'
+      ) {
+        if (source !== 'simulated' && !getRealDatasetForSource(source).length) {
+          return Response.json(
+            { success: false, error: 'Requested real data stream has no samples.' },
+            { status: 400 },
+          );
+        }
+        streamingSource = source;
+        realDataIndexes[source] = 0;
+        simulatedData = undefined;
+        return Response.json({ success: true, source: streamingSource });
       }
-      return Response.json({ success: true, source: streamingSource });
+      return Response.json({ success: false, error: 'Invalid source selection' }, { status: 400 });
     }
 
     if (mode && mode in stressProfiles) {

@@ -13,6 +13,17 @@ import {
   Loader2,
 } from 'lucide-react';
 
+type StreamSource = 'simulated' | 'real_all' | 'real_not_stressed' | 'real_stressed';
+
+interface StreamMeta {
+  source: StreamSource;
+  availableRealSamples?: {
+    all: number;
+    notStressed: number;
+    stressed: number;
+  };
+}
+
 interface FeatureStreamData {
   timestamp: number;
   hrvMeanNN: number;
@@ -43,6 +54,7 @@ export default function Dashboard() {
   const [accHistory, setAccHistory] = useState<ChartDataPoint[]>([]);
   const [tempHistory, setTempHistory] = useState<ChartDataPoint[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
+  const [streamMeta, setStreamMeta] = useState<StreamMeta | null>(null);
 
   const connectToStream = useCallback(() => {
     const eventSource = new EventSource('/api/stream');
@@ -53,7 +65,10 @@ export default function Dashboard() {
 
     eventSource.onmessage = (event) => {
       try {
-        const data: FeatureStreamData = JSON.parse(event.data);
+        const parsed = JSON.parse(event.data) as FeatureStreamData & { __meta?: StreamMeta };
+        const { __meta, ...features } = parsed;
+        const data = features as FeatureStreamData;
+        setStreamMeta((prev) => (__meta ? __meta : prev));
         setCurrentData(data);
 
         setHrvHistory((prev) => {
@@ -247,7 +262,7 @@ export default function Dashboard() {
 
           {/* Activity Control Panel */}
           <div className="w-[420px] flex-shrink-0">
-            <ActivityControlPanel latestFeatures={currentData} />
+            <ActivityControlPanel latestFeatures={currentData} streamMeta={streamMeta} />
             <TimeScaleControl />
           </div>
         </div>
