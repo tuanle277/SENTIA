@@ -3,30 +3,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import MetricCard from './components/MetricCard';
 import RealtimeChart from './components/RealtimeChart';
-import ActivityIndicator from './components/ActivityIndicator';
 import ActivityControlPanel from './components/ActivityControlPanel';
 import TimeScaleControl from './components/TimeScaleControl';
-import { 
-  Heart, 
-  Brain, 
-  Droplet, 
-  Thermometer, 
-  Footprints, 
-  Flame,
-  Moon,
-  Activity
+import {
+  Activity,
+  Droplet,
+  Gauge,
+  Thermometer,
+  Loader2,
 } from 'lucide-react';
 
-interface WearableData {
+interface FeatureStreamData {
   timestamp: number;
-  heartRate: number;
-  stressLevel: number;
-  spo2: number;
-  temperature: number;
-  steps: number;
-  calories: number;
-  sleepQuality: number;
-  activityLevel: 'resting' | 'light' | 'moderate' | 'intense';
+  hrvMeanNN: number;
+  edaMean: number;
+  accMagMean: number;
+  tempMean: number;
 }
 
 interface ChartDataPoint {
@@ -36,10 +28,19 @@ interface ChartDataPoint {
 
 const MAX_DATA_POINTS = 60; 
 
+const FEATURE_BASELINES = {
+  hrvMeanNN: { mean: 821.286, std: 55.89 },
+  edaMean: { mean: 1.13, std: 0.22 },
+  accMagMean: { mean: 63.51, std: 0.488 },
+  tempMean: { mean: 35.762, std: 0.053 },
+};
+
 export default function Dashboard() {
-  const [currentData, setCurrentData] = useState<WearableData | null>(null);
-  const [heartRateHistory, setHeartRateHistory] = useState<ChartDataPoint[]>([]);
-  const [stressHistory, setStressHistory] = useState<ChartDataPoint[]>([]);
+  const [currentData, setCurrentData] = useState<FeatureStreamData | null>(null);
+  const [hrvHistory, setHrvHistory] = useState<ChartDataPoint[]>([]);
+  const [edaHistory, setEdaHistory] = useState<ChartDataPoint[]>([]);
+  const [accHistory, setAccHistory] = useState<ChartDataPoint[]>([]);
+  const [tempHistory, setTempHistory] = useState<ChartDataPoint[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
 
   const connectToStream = useCallback(() => {
@@ -51,17 +52,26 @@ export default function Dashboard() {
 
     eventSource.onmessage = (event) => {
       try {
-        const data: WearableData = JSON.parse(event.data);
+        const data: FeatureStreamData = JSON.parse(event.data);
         setCurrentData(data);
 
-        
-        setHeartRateHistory((prev) => {
-          const newData = [...prev, { timestamp: data.timestamp, value: data.heartRate }];
+        setHrvHistory((prev) => {
+          const newData = [...prev, { timestamp: data.timestamp, value: data.hrvMeanNN }];
           return newData.slice(-MAX_DATA_POINTS);
         });
 
-        setStressHistory((prev) => {
-          const newData = [...prev, { timestamp: data.timestamp, value: data.stressLevel }];
+        setEdaHistory((prev) => {
+          const newData = [...prev, { timestamp: data.timestamp, value: data.edaMean }];
+          return newData.slice(-MAX_DATA_POINTS);
+        });
+
+        setAccHistory((prev) => {
+          const newData = [...prev, { timestamp: data.timestamp, value: data.accMagMean }];
+          return newData.slice(-MAX_DATA_POINTS);
+        });
+
+        setTempHistory((prev) => {
+          const newData = [...prev, { timestamp: data.timestamp, value: data.tempMean }];
           return newData.slice(-MAX_DATA_POINTS);
         });
       } catch (error) {
@@ -88,27 +98,32 @@ export default function Dashboard() {
     return () => eventSource.close();
   }, [connectToStream]);
 
-  const getHeartRateStatus = (hr: number) => {
-    if (hr < 60 || hr > 100) return 'warning';
-    if (hr > 120) return 'danger';
+  const getHrvStatus = (value: number) => {
+    const baseline = FEATURE_BASELINES.hrvMeanNN;
+    if (value < baseline.mean - baseline.std * 1.3) return 'danger';
+    if (value < baseline.mean - baseline.std * 0.7) return 'warning';
     return 'normal';
   };
 
-  const getStressStatus = (stress: number) => {
-    if (stress > 70) return 'danger';
-    if (stress > 50) return 'warning';
+  const getEdaStatus = (value: number) => {
+    const baseline = FEATURE_BASELINES.edaMean;
+    if (value > baseline.mean + baseline.std * 1.3) return 'danger';
+    if (value > baseline.mean + baseline.std * 0.7) return 'warning';
     return 'normal';
   };
 
-  const getSpo2Status = (spo2: number) => {
-    if (spo2 < 95) return 'warning';
-    if (spo2 < 90) return 'danger';
+  const getAccStatus = (value: number) => {
+    const baseline = FEATURE_BASELINES.accMagMean;
+    if (value > baseline.mean + baseline.std * 1.6) return 'danger';
+    if (value > baseline.mean + baseline.std * 0.9) return 'warning';
     return 'normal';
   };
 
-  const getTempStatus = (temp: number) => {
-    if (temp > 37.5 || temp < 36) return 'warning';
-    if (temp > 38) return 'danger';
+  const getTempStatus = (value: number) => {
+    const baseline = FEATURE_BASELINES.tempMean;
+    const diff = value - baseline.mean;
+    if (Math.abs(diff) > baseline.std * 3) return 'danger';
+    if (Math.abs(diff) > baseline.std * 2) return 'warning';
     return 'normal';
   };
 
@@ -144,83 +159,76 @@ export default function Dashboard() {
             {/* Primary Metrics Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
               <MetricCard
-                title="Heart Rate"
-                value={currentData.heartRate}
-                unit="BPM"
-                icon={<Heart className="w-6 h-6 text-red-400" />}
-                status={getHeartRateStatus(currentData.heartRate)}
+                title="HRV Mean NN"
+                value={currentData.hrvMeanNN.toFixed(0)}
+                unit="ms"
+                icon={<Activity className="w-6 h-6 text-cyan-400" />}
+                status={getHrvStatus(currentData.hrvMeanNN)}
               />
               <MetricCard
-                title="Stress Level"
-                value={currentData.stressLevel}
-                unit="%"
-                icon={<Brain className="w-6 h-6 text-purple-400" />}
-                status={getStressStatus(currentData.stressLevel)}
-              />
-              <MetricCard
-                title="Blood Oxygen"
-                value={currentData.spo2}
-                unit="%"
+                title="EDA Mean"
+                value={currentData.edaMean.toFixed(3)}
+                unit="uS"
                 icon={<Droplet className="w-6 h-6 text-blue-400" />}
-                status={getSpo2Status(currentData.spo2)}
-                subtitle="SpO2"
+                status={getEdaStatus(currentData.edaMean)}
               />
               <MetricCard
-                title="Temperature"
-                value={currentData.temperature}
+                title="ACC Magnitude"
+                value={currentData.accMagMean.toFixed(2)}
+                unit="g"
+                icon={<Gauge className="w-6 h-6 text-purple-400" />}
+                status={getAccStatus(currentData.accMagMean)}
+              />
+              <MetricCard
+                title="Skin Temperature"
+                value={currentData.tempMean.toFixed(2)}
                 unit="°C"
                 icon={<Thermometer className="w-6 h-6 text-orange-400" />}
-                status={getTempStatus(currentData.temperature)}
+                status={getTempStatus(currentData.tempMean)}
               />
-            </div>
-
-            {/* Secondary Metrics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-              <MetricCard
-                title="Steps"
-                value={currentData.steps.toLocaleString()}
-                icon={<Footprints className="w-6 h-6 text-green-400" />}
-                subtitle="Today"
-              />
-              <MetricCard
-                title="Calories"
-                value={currentData.calories.toLocaleString()}
-                unit="kcal"
-                icon={<Flame className="w-6 h-6 text-orange-400" />}
-                subtitle="Burned"
-              />
-              <MetricCard
-                title="Sleep Quality"
-                value={currentData.sleepQuality}
-                unit="%"
-                icon={<Moon className="w-6 h-6 text-indigo-400" />}
-                subtitle="Last night"
-              />
-              <div className="md:hidden lg:block">
-                <ActivityIndicator level={currentData.activityLevel} />
-              </div>
-            </div>
-
-            {/* Activity Indicator for medium screens */}
-            <div className="hidden md:block lg:hidden mb-8">
-              <ActivityIndicator level={currentData.activityLevel} />
             </div>
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <RealtimeChart
-                data={heartRateHistory}
-                title="Heart Rate Trend"
-                color="#EF4444"
-                unit=" BPM"
-                domain={[50, 180]}
+                data={hrvHistory}
+                title="HRV Mean NN Trend"
+                color="#22D3EE"
+                unit=" ms"
+                domain={[
+                  FEATURE_BASELINES.hrvMeanNN.mean - FEATURE_BASELINES.hrvMeanNN.std * 2,
+                  FEATURE_BASELINES.hrvMeanNN.mean + FEATURE_BASELINES.hrvMeanNN.std * 2,
+                ]}
               />
               <RealtimeChart
-                data={stressHistory}
-                title="Stress Level Trend"
+                data={edaHistory}
+                title="EDA Mean Trend"
+                color="#F97316"
+                unit=" uS"
+                domain={[
+                  Math.max(0, FEATURE_BASELINES.edaMean.mean - FEATURE_BASELINES.edaMean.std),
+                  FEATURE_BASELINES.edaMean.mean + FEATURE_BASELINES.edaMean.std * 3,
+                ]}
+              />
+              <RealtimeChart
+                data={accHistory}
+                title="ACC Magnitude Trend"
                 color="#A855F7"
-                unit="%"
-                domain={[0, 100]}
+                unit=" g"
+                domain={[
+                  FEATURE_BASELINES.accMagMean.mean - FEATURE_BASELINES.accMagMean.std * 2,
+                  FEATURE_BASELINES.accMagMean.mean + FEATURE_BASELINES.accMagMean.std * 2,
+                ]}
+              />
+              <RealtimeChart
+                data={tempHistory}
+                title="Skin Temperature Trend"
+                color="#FACC15"
+                unit=" °C"
+                domain={[
+                  FEATURE_BASELINES.tempMean.mean - FEATURE_BASELINES.tempMean.std * 3,
+                  FEATURE_BASELINES.tempMean.mean + FEATURE_BASELINES.tempMean.std * 3,
+                ]}
               />
             </div>
 
@@ -229,7 +237,7 @@ export default function Dashboard() {
             ) : (
               <div className="flex items-center justify-center h-96">
                 <div className="text-center">
-                  <Activity className="w-16 h-16 text-gray-600 animate-pulse mx-auto mb-4" />
+                  <Loader2 className="w-16 h-16 text-gray-600 animate-spin mx-auto mb-4" />
                   <p className="text-gray-400 text-lg">Connecting to wearable device...</p>
                 </div>
               </div>
@@ -237,8 +245,8 @@ export default function Dashboard() {
           </div>
 
           {/* Activity Control Panel */}
-          <div className="w-80 flex-shrink-0">
-            <ActivityControlPanel />
+          <div className="w-[420px] flex-shrink-0">
+            <ActivityControlPanel latestFeatures={currentData} />
             <TimeScaleControl />
           </div>
         </div>
