@@ -41,14 +41,14 @@ interface ActivityControlPanelProps {
 
 const stressStates: StressButton[] = [
   {
-    mode: 'not_stressed',
+    mode: 'stressed',
     label: 'Not Stressed',
     icon: <Smile className="w-5 h-5 text-white" />,
     description: 'Baseline physiological state',
     color: 'from-emerald-500 to-emerald-600'
   },
   {
-    mode: 'stressed',
+    mode: 'not_stressed',
     label: 'Stressed',
     icon: <AlertTriangle className="w-5 h-5 text-white" />,
     description: 'Elevated stress response',
@@ -57,7 +57,7 @@ const stressStates: StressButton[] = [
 ];
 
 const DEFAULT_PREDICTION_ENDPOINT =
-  process.env.NEXT_PUBLIC_STRESS_API_URL ?? 'http://127.0.0.1:8000/predict';
+  process.env.NEXT_PUBLIC_STRESS_API_URL ?? 'https://subsinuous-inundant-lorie.ngrok-free.dev/predict';
 
 const REAL_SOURCE_LABELS: Record<Exclude<StreamSource, 'simulated'>, string> = {
   real_all: 'Real Stream (All Samples)',
@@ -87,6 +87,8 @@ export default function ActivityControlPanel({ latestFeatures, streamMeta }: Act
   }, [streamMeta?.source]);
 
   const handleModeChange = async (mode: StressMode) => {
+    const previous = activeMode;
+    setActiveMode(mode);
     setIsChanging(true);
     try {
       const response = await fetch('/api/stream', {
@@ -97,13 +99,14 @@ export default function ActivityControlPanel({ latestFeatures, streamMeta }: Act
         body: JSON.stringify({ mode }),
       });
 
-      if (response.ok) {
-        setActiveMode(mode);
+      if (!response.ok) {
+        throw new Error(`Failed to switch mode (${response.status})`);
       }
     } catch (error) {
       console.error('Failed to change stress mode:', error);
+      setActiveMode(previous);
     } finally {
-      setTimeout(() => setIsChanging(false), 300);
+      setIsChanging(false);
     }
   };
 
@@ -119,16 +122,13 @@ export default function ActivityControlPanel({ latestFeatures, streamMeta }: Act
 
   const runInference = useCallback(async () => {
     if (!featurePayload) {
-      setPredictionError('Waiting for live telemetry before running inference.');
+      setPredictionError(null);
       return;
     }
     setIsPredicting(true);
     setPredictionError(null);
-    setPredictionResult(null);
-    setPredictionDetails(null);
 
     try {
-      console.log('Sending prediction request with body:', JSON.stringify(featurePayload));
       const response = await fetch(DEFAULT_PREDICTION_ENDPOINT, {
         method: 'POST',
         headers: {
@@ -199,6 +199,10 @@ export default function ActivityControlPanel({ latestFeatures, streamMeta }: Act
         return;
       }
       setPredictionError(null);
+      const previous = streamSource;
+      setStreamSource(target);
+      setPredictionResult(null);
+      setPredictionDetails(null);
       try {
         const response = await fetch('/api/stream', {
           method: 'POST',
@@ -215,12 +219,9 @@ export default function ActivityControlPanel({ latestFeatures, streamMeta }: Act
               : `Failed to switch to ${target.replace(/_/g, ' ')}`;
           throw new Error(errorMessage);
         }
-        setStreamSource(target);
-        setPredictionResult(null);
-        setPredictionDetails(null);
-        setPredictionError(null);
       } catch (error) {
         console.error('Failed to toggle stream source', error);
+        setStreamSource(previous);
         setPredictionError('Unable to switch data source. Please try again.');
       }
     },
@@ -236,7 +237,7 @@ export default function ActivityControlPanel({ latestFeatures, streamMeta }: Act
 
   const renderRealSourceSelector = () => (
     <div className="mt-4">
-      <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Real data slice</p>
+      <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">Real data slice</p>
       <div className="flex flex-wrap gap-2">
         {(['real_all', 'real_not_stressed', 'real_stressed'] as Exclude<
           StreamSource,
@@ -250,6 +251,7 @@ export default function ActivityControlPanel({ latestFeatures, streamMeta }: Act
                 ? realCounts?.notStressed
                 : realCounts?.stressed;
           const disabled = typeof count === 'number' ? count === 0 : false;
+          const isActive = streamSource === option;
           return (
             <button
               key={option}
@@ -258,17 +260,15 @@ export default function ActivityControlPanel({ latestFeatures, streamMeta }: Act
               disabled={disabled}
               className={`
                 px-3 py-2 text-xs font-semibold rounded-lg border transition
-                ${
-                  streamSource === option
-                    ? 'border-indigo-400 bg-indigo-500/10 text-indigo-200'
-                    : 'border-gray-600 bg-gray-900 text-gray-300 hover:bg-gray-800'
-                }
+                ${isActive
+                  ? 'border-indigo-500 bg-indigo-100 text-indigo-700'
+                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100'}
                 ${disabled ? 'opacity-40 cursor-not-allowed' : ''}
               `}
             >
               <div>{label}</div>
               {typeof count === 'number' && (
-                <div className="text-[10px] text-gray-500 mt-1">{count} samples</div>
+                <div className="text-[10px] text-slate-400 mt-1">{count} samples</div>
               )}
             </button>
           );
@@ -281,22 +281,22 @@ export default function ActivityControlPanel({ latestFeatures, streamMeta }: Act
     streamSource === 'simulated' ? activeLabel : describeRealSource(streamSource) ?? 'Real Stream';
 
   return (
-    <div className="bg-gray-800 rounded-2xl p-7 shadow-lg border border-gray-700 sticky top-8">
+    <div className="bg-slate-100 rounded-2xl p-7 shadow-lg border border-slate-200 sticky top-8">
       <div className="mb-6">
-        <h3 className="text-2xl font-bold text-white mb-3">Stress Simulator</h3>
-        <p className="text-gray-400 text-sm leading-relaxed">
+        <h3 className="text-2xl font-bold text-slate-900 mb-3">Stress Simulator</h3>
+        <p className="text-slate-600 text-sm leading-relaxed">
           Toggle between neutral and stressed physiology
         </p>
         <button
           type="button"
           onClick={togglePrimarySource}
-          className="mt-4 inline-flex items-center justify-center rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-200 hover:bg-gray-800 transition"
+          className="mt-4 inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition"
         >
           {streamSource === 'simulated' ? 'Switch to Real Data Stream' : 'Return to Simulated Stream'}
         </button>
-        <p className="mt-2 text-xs uppercase tracking-wide text-gray-500">
+        <p className="mt-2 text-xs uppercase tracking-wide text-slate-500">
           Current source:{' '}
-          <span className="text-gray-200">
+          <span className="text-slate-800">
             {streamSource === 'simulated' ? 'Simulated' : describeRealSource(streamSource) ?? 'Real Stream'}
           </span>
         </p>
@@ -314,30 +314,30 @@ export default function ActivityControlPanel({ latestFeatures, streamMeta }: Act
                 w-full p-4 rounded-lg transition-all duration-300
                 ${activeMode === state.mode
                   ? `bg-gradient-to-r ${state.color} shadow-lg scale-105`
-                  : 'bg-gray-700 hover:bg-gray-650 hover:scale-102'
+                  : 'bg-white hover:bg-slate-100 hover:scale-102 border border-slate-200'
                 }
                 ${isChanging ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 disabled:cursor-not-allowed
               `}
             >
               <div className="flex items-center gap-3">
-                <div className={`
-                  p-2 rounded-lg
-                  ${activeMode === state.mode
-                    ? 'bg-white/20'
-                    : 'bg-gray-600'
-                  }
-                `}>
-                  {state.icon}
+              <div className={`
+                p-2 rounded-lg
+                ${activeMode === state.mode
+                  ? 'bg-white/20'
+                  : 'bg-slate-200'
+                }
+              `}>
+                {state.icon}
                 </div>
                 <div className="flex-1 text-left">
-                  <div className="font-semibold text-white">
+                  <div className={`font-semibold ${activeMode === state.mode ? 'text-white' : 'text-slate-800'}`}>
                     {state.label}
                   </div>
                   <div className={`text-xs ${
                     activeMode === state.mode
                       ? 'text-white/80'
-                      : 'text-gray-400'
+                      : 'text-slate-500'
                   }`}>
                     {state.description}
                   </div>
@@ -348,102 +348,50 @@ export default function ActivityControlPanel({ latestFeatures, streamMeta }: Act
               </div>
             </button>
           ))
-        ) : (
-          <div className="rounded-xl border border-gray-700 bg-gray-900 p-4">
-            <div className="text-sm font-semibold text-gray-200 mb-3">Ground Truth (streamed)</div>
-            <dl className="space-y-2 text-xs text-gray-300">
-              <div className="flex justify-between">
-                <dt className="uppercase tracking-wide text-gray-500">HRV_MeanNN</dt>
-                <dd className="font-mono text-gray-200">
-                  {latestFeatures ? latestFeatures.hrvMeanNN.toFixed(3) : '---'}
-                </dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="uppercase tracking-wide text-gray-500">EDA_Mean</dt>
-                <dd className="font-mono text-gray-200">
-                  {latestFeatures ? latestFeatures.edaMean.toFixed(3) : '---'}
-                </dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="uppercase tracking-wide text-gray-500">ACC_Mag_Mean</dt>
-                <dd className="font-mono text-gray-200">
-                  {latestFeatures ? latestFeatures.accMagMean.toFixed(3) : '---'}
-                </dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="uppercase tracking-wide text-gray-500">TEMP_Mean</dt>
-                <dd className="font-mono text-gray-200">
-                  {latestFeatures ? latestFeatures.tempMean.toFixed(3) : '---'}
-                </dd>
-              </div>
-              <div className="flex justify-between border-t border-gray-700/60 pt-2 mt-2">
-                <dt className="uppercase tracking-wide text-gray-500">True Stress Label</dt>
-                <dd className="font-semibold text-white">
-                  {latestFeatures?.stressLabel === undefined ||
-                  latestFeatures.stressLabel === null ||
-                  Number.isNaN(latestFeatures.stressLabel)
-                    ? '---'
-                    : latestFeatures.stressLabel === 1
-                      ? 'Stressed (1)'
-                      : 'Not Stressed (0)'}
-                </dd>
-              </div>
-            </dl>
-          </div>
-        )}
+        ) : null}
       </div>
-
-      <div className="mt-7 p-5 bg-gray-900 rounded-xl border border-dashed border-gray-600">
-        <h4 className="text-sm font-semibold text-gray-300 mb-3">Model Inference Preview</h4>
+      <div className="mt-7 p-5 bg-white rounded-xl border border-dashed border-slate-300">
+        <h4 className="text-sm font-semibold text-slate-800 mb-3">Model Inference Preview</h4>
         <div className="space-y-4">
-          <div className="rounded-lg border border-gray-700/60 bg-gray-800/60 p-4 text-xs text-gray-300">
-            <div className="font-semibold text-gray-200 mb-2">Latest feature snapshot</div>
+          <div className="flex items-center justify-between text-xs text-slate-500 bg-slate-100 border border-slate-200 px-3 py-2 rounded-lg">
+            <span>Inference updates every 0.5 seconds</span>
+            <span className={`inline-flex items-center gap-1 ${isPredicting ? 'text-emerald-600' : 'text-slate-400'}`}>
+              <span className={`w-2 h-2 rounded-full ${isPredicting ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+              {isPredicting ? 'Updating' : 'Idle'}
+            </span>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-100 p-4 text-xs text-slate-700">
+            <div className="font-semibold text-slate-800 mb-2">Latest feature snapshot</div>
             {featurePayload ? (
               <dl className="grid grid-cols-2 gap-2">
                 {Object.entries(featurePayload).map(([key, value]) => (
                   <div key={key} className="flex justify-between">
-                    <dt className="uppercase tracking-wide text-gray-500">{key}</dt>
-                    <dd className="font-mono text-gray-200">{value}</dd>
+                    <dt className="uppercase tracking-wide text-slate-500">{key}</dt>
+                    <dd className="font-mono text-slate-800">{value}</dd>
                   </div>
                 ))}
               </dl>
             ) : (
-              <p className="text-gray-500 text-center">Awaiting live telemetry...</p>
+              <p className="text-slate-500 text-center">Awaiting live telemetry...</p>
             )}
           </div>
-          <button
-            onClick={runInference}
-            disabled={isPredicting || !featurePayload}
-            className="w-full py-3 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold hover:from-indigo-400 hover:to-purple-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isPredicting ? 'Requesting prediction...' : 'Run Stress Inference'}
-          </button>
           {predictionResult && (
-            <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4">
-              <p className="text-sm font-semibold text-emerald-300">
-                Prediction: <span className="text-white">{predictionResult}</span>
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+              <p className="text-sm font-semibold text-emerald-700">
+                Prediction: <span className="text-emerald-900">{predictionResult}</span>
               </p>
               {predictionDetails && (
-                <pre className="mt-3 text-xs text-gray-300 bg-gray-900/60 rounded-lg p-3 overflow-x-auto">
+                <pre className="mt-3 text-xs text-slate-700 bg-emerald-100 rounded-lg p-3 overflow-x-auto">
                   {JSON.stringify(predictionDetails, null, 2)}
                 </pre>
               )}
             </div>
           )}
           {predictionError && (
-            <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-300">
+            <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
               {predictionError}
             </div>
           )}
-        </div>
-      </div>
-
-      <div className="mt-7 p-5 bg-gray-900 rounded-xl border border-gray-700">
-        <div className="text-xs text-gray-400 text-center">
-          Current Mode
-        </div>
-        <div className="text-center text-white font-bold mt-2 text-lg">
-          {currentModeDisplay}
         </div>
       </div>
     </div>

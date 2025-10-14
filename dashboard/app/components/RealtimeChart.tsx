@@ -18,8 +18,8 @@ interface RealtimeChartProps {
 
 export default function RealtimeChart({ data, title, color, unit, domain }: RealtimeChartProps) {
   return (
-    <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
-      <h3 className="text-lg font-semibold text-white mb-4">{title}</h3>
+    <div className="bg-white rounded-xl p-6 shadow-md border border-slate-200">
+      <h3 className="text-lg font-semibold text-slate-900 mb-4">{title}</h3>
       <ResponsiveContainer width="100%" height={250}>
         <AreaChart data={data}>
           <defs>
@@ -28,24 +28,24 @@ export default function RealtimeChart({ data, title, color, unit, domain }: Real
               <stop offset="95%" stopColor={color} stopOpacity={0}/>
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
           <XAxis 
             dataKey="timestamp" 
             tickFormatter={(timestamp) => format(new Date(timestamp), 'HH:mm:ss')}
-            stroke="#9CA3AF"
+            stroke="#94A3B8"
             style={{ fontSize: '12px' }}
           />
           <YAxis 
-            stroke="#9CA3AF"
+            stroke="#94A3B8"
             style={{ fontSize: '12px' }}
             domain={domain || ['auto', 'auto']}
           />
           <Tooltip 
             contentStyle={{ 
-              backgroundColor: '#1F2937', 
-              border: '1px solid #374151',
+              backgroundColor: '#F8FAFC', 
+              border: '1px solid #E2E8F0',
               borderRadius: '8px',
-              color: '#fff'
+              color: '#0F172A'
             }}
             labelFormatter={(timestamp) => format(new Date(timestamp), 'HH:mm:ss')}
             formatter={(value: number) => [`${value.toFixed(1)}${unit || ''}`, title]}
@@ -63,4 +63,3 @@ export default function RealtimeChart({ data, title, color, unit, domain }: Real
     </div>
   );
 }
-
