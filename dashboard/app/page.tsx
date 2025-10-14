@@ -19,6 +19,7 @@ interface FeatureStreamData {
   edaMean: number;
   accMagMean: number;
   tempMean: number;
+  stressLabel?: number;
 }
 
 interface ChartDataPoint {

@@ -53,6 +53,7 @@ export default function ActivityControlPanel({ latestFeatures }: ActivityControl
   const [predictionResult, setPredictionResult] = useState<string | null>(null);
   const [predictionDetails, setPredictionDetails] = useState<Record<string, unknown> | null>(null);
   const [predictionError, setPredictionError] = useState<string | null>(null);
+  const [streamSource, setStreamSource] = useState<'simulated' | 'real'>('simulated');
   const activeLabel = stressStates.find((state) => state.mode === activeMode)?.label ?? activeMode;
 
   const handleModeChange = async (mode: StressMode) => {
@@ -162,6 +163,29 @@ export default function ActivityControlPanel({ latestFeatures }: ActivityControl
     return () => clearInterval(interval);
   }, [featurePayload, isPredicting, runInference]);
 
+  const toggleStreamSource = useCallback(async () => {
+    const next = streamSource === 'simulated' ? 'real' : 'simulated';
+    try {
+      const response = await fetch('/api/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ source: next }),
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to switch stream (status ${response.status})`);
+      }
+      setStreamSource(next);
+      setPredictionResult(null);
+      setPredictionDetails(null);
+      setPredictionError(null);
+    } catch (error) {
+      console.error('Failed to toggle stream source', error);
+      setPredictionError('Unable to switch data source. Please try again.');
+    }
+  }, [streamSource]);
+
   return (
     <div className="bg-gray-800 rounded-2xl p-7 shadow-lg border border-gray-700 sticky top-8">
       <div className="mb-6">
@@ -169,52 +193,106 @@ export default function ActivityControlPanel({ latestFeatures }: ActivityControl
         <p className="text-gray-400 text-sm leading-relaxed">
           Toggle between neutral and stressed physiology
         </p>
+        <button
+          type="button"
+          onClick={toggleStreamSource}
+          className="mt-4 inline-flex items-center justify-center rounded-lg border border-gray-600 bg-gray-900 px-4 py-2 text-sm font-semibold text-gray-200 hover:bg-gray-800 transition"
+        >
+          {streamSource === 'simulated' ? 'Switch to Real Data Stream' : 'Use Simulated Data'}
+        </button>
+        <p className="mt-2 text-xs uppercase tracking-wide text-gray-500">
+          Current source: <span className="text-gray-200">{streamSource}</span>
+        </p>
       </div>
 
       <div className="space-y-3">
-        {stressStates.map((state) => (
-          <button
-            key={state.mode}
-            onClick={() => handleModeChange(state.mode)}
-            disabled={isChanging}
-            className={`
-              w-full p-4 rounded-lg transition-all duration-300
-              ${activeMode === state.mode
-                ? `bg-gradient-to-r ${state.color} shadow-lg scale-105`
-                : 'bg-gray-700 hover:bg-gray-650 hover:scale-102'
-              }
-              ${isChanging ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-              disabled:cursor-not-allowed
-            `}
-          >
-            <div className="flex items-center gap-3">
-              <div className={`
-                p-2 rounded-lg
+        {streamSource === 'simulated' ? (
+          stressStates.map((state) => (
+            <button
+              key={state.mode}
+              onClick={() => handleModeChange(state.mode)}
+              disabled={isChanging}
+              className={`
+                w-full p-4 rounded-lg transition-all duration-300
                 ${activeMode === state.mode
-                  ? 'bg-white/20'
-                  : 'bg-gray-600'
+                  ? `bg-gradient-to-r ${state.color} shadow-lg scale-105`
+                  : 'bg-gray-700 hover:bg-gray-650 hover:scale-102'
                 }
-              `}>
-                {state.icon}
-              </div>
-              <div className="flex-1 text-left">
-                <div className="font-semibold text-white">
-                  {state.label}
+                ${isChanging ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                disabled:cursor-not-allowed
+              `}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`
+                  p-2 rounded-lg
+                  ${activeMode === state.mode
+                    ? 'bg-white/20'
+                    : 'bg-gray-600'
+                  }
+                `}>
+                  {state.icon}
                 </div>
-                <div className={`text-xs ${
-                  activeMode === state.mode
-                    ? 'text-white/80'
-                    : 'text-gray-400'
-                }`}>
-                  {state.description}
+                <div className="flex-1 text-left">
+                  <div className="font-semibold text-white">
+                    {state.label}
+                  </div>
+                  <div className={`text-xs ${
+                    activeMode === state.mode
+                      ? 'text-white/80'
+                      : 'text-gray-400'
+                  }`}>
+                    {state.description}
+                  </div>
                 </div>
+                {activeMode === state.mode && (
+                  <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                )}
               </div>
-              {activeMode === state.mode && (
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-              )}
-            </div>
-          </button>
-        ))}
+            </button>
+          ))
+        ) : (
+          <div className="rounded-xl border border-gray-700 bg-gray-900 p-4">
+            <div className="text-sm font-semibold text-gray-200 mb-3">Ground Truth (streamed)</div>
+            <dl className="space-y-2 text-xs text-gray-300">
+              <div className="flex justify-between">
+                <dt className="uppercase tracking-wide text-gray-500">HRV_MeanNN</dt>
+                <dd className="font-mono text-gray-200">
+                  {latestFeatures ? latestFeatures.hrvMeanNN.toFixed(3) : '---'}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="uppercase tracking-wide text-gray-500">EDA_Mean</dt>
+                <dd className="font-mono text-gray-200">
+                  {latestFeatures ? latestFeatures.edaMean.toFixed(3) : '---'}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="uppercase tracking-wide text-gray-500">ACC_Mag_Mean</dt>
+                <dd className="font-mono text-gray-200">
+                  {latestFeatures ? latestFeatures.accMagMean.toFixed(3) : '---'}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="uppercase tracking-wide text-gray-500">TEMP_Mean</dt>
+                <dd className="font-mono text-gray-200">
+                  {latestFeatures ? latestFeatures.tempMean.toFixed(3) : '---'}
+                </dd>
+              </div>
+              <div className="flex justify-between border-t border-gray-700/60 pt-2 mt-2">
+                <dt className="uppercase tracking-wide text-gray-500">True Stress Label</dt>
+                <dd className="font-semibold text-white">
+                  {latestFeatures?.stressLabel === undefined ||
+                  latestFeatures.stressLabel === null ||
+                  Number.isNaN(latestFeatures.stressLabel)
+                    ? '---'
+                    : latestFeatures.stressLabel === 1
+                      ? 'Stressed (1)'
+                      : 'Not Stressed (0)'}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        )}
       </div>
 
       <div className="mt-7 p-5 bg-gray-900 rounded-xl border border-dashed border-gray-600">
