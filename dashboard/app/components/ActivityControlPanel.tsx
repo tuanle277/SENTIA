@@ -1,10 +1,13 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
-  Smile,
-  AlertTriangle,
-} from 'lucide-react';
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { Smile, AlertTriangle } from "lucide-react";
 
 interface FeatureSnapshot {
   hrvMeanNN: number;
@@ -13,7 +16,7 @@ interface FeatureSnapshot {
   tempMean: number;
 }
 
-type StressMode = 'not_stressed' | 'stressed';
+type StressMode = "not_stressed" | "stressed";
 
 interface StressButton {
   mode: StressMode;
@@ -29,39 +32,65 @@ interface ActivityControlPanelProps {
 
 const stressStates: StressButton[] = [
   {
-    mode: 'not_stressed',
-    label: 'Not Stressed',
+    mode: "not_stressed",
+    label: "Not Stressed",
     icon: <Smile className="w-5 h-5 text-white" />,
-    description: 'Baseline physiological state',
-    color: 'from-emerald-500 to-emerald-600'
+    description: "Baseline physiological state",
+    color: "from-emerald-500 to-emerald-600",
   },
   {
-    mode: 'stressed',
-    label: 'Stressed',
+    mode: "stressed",
+    label: "Stressed",
     icon: <AlertTriangle className="w-5 h-5 text-white" />,
-    description: 'Elevated stress response',
-    color: 'from-rose-500 to-rose-600'
-  }
+    description: "Elevated stress response",
+    color: "from-rose-500 to-rose-600",
+  },
 ];
 
-const DEFAULT_PREDICTION_ENDPOINT = 'http://10.232.253.188:5000/predict';
+const DEFAULT_PREDICTION_ENDPOINT =
+  process.env.NEXT_PUBLIC_PREDICT_ENDPOINT ||
+  "https://subsinuous-inundant-lorie.ngrok-free.dev/predict";
+const DEFAULT_GENERATE_ENDPOINT =
+  process.env.NEXT_PUBLIC_GENERATE_ENDPOINT ||
+  "https://subsinuous-inundant-lorie.ngrok-free.dev/generate";
 
-export default function ActivityControlPanel({ latestFeatures }: ActivityControlPanelProps) {
-  const [activeMode, setActiveMode] = useState<StressMode>('not_stressed');
+async function callGenerate(targetClass: number, count = 100) {
+  const resp = await fetch(
+    process.env.NEXT_PUBLIC_GENERATE_ENDPOINT || DEFAULT_GENERATE_ENDPOINT,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target_class: targetClass, num_samples: count }),
+    }
+  );
+  if (!resp.ok) throw new Error(`Generate failed (${resp.status})`);
+  return (await resp.json()) as Array<Record<string, unknown>>;
+}
+
+export default function ActivityControlPanel({
+  latestFeatures,
+}: ActivityControlPanelProps) {
+  const [activeMode, setActiveMode] = useState<StressMode>("not_stressed");
   const [isChanging, setIsChanging] = useState(false);
   const [isPredicting, setIsPredicting] = useState(false);
   const [predictionResult, setPredictionResult] = useState<string | null>(null);
-  const [predictionDetails, setPredictionDetails] = useState<Record<string, unknown> | null>(null);
+  const [predictionDetails, setPredictionDetails] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
   const [predictionError, setPredictionError] = useState<string | null>(null);
-  const activeLabel = stressStates.find((state) => state.mode === activeMode)?.label ?? activeMode;
+  const activeLabel =
+    stressStates.find((state) => state.mode === activeMode)?.label ??
+    activeMode;
 
   const handleModeChange = async (mode: StressMode) => {
     setIsChanging(true);
     try {
-      const response = await fetch('/api/stream', {
-        method: 'POST',
+      // 1) Trigger server stream mode change (affects live SSE)
+      const response = await fetch("/api/stream", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ mode }),
       });
@@ -69,8 +98,15 @@ export default function ActivityControlPanel({ latestFeatures }: ActivityControl
       if (response.ok) {
         setActiveMode(mode);
       }
+
+      // 2) Trigger backend synthetic generator for the selected class
+      //    Map: not_stressed -> 0, stressed -> 1
+      const targetClass = mode === "stressed" ? 1 : 0;
+      void callGenerate(targetClass, 250).catch((err) => {
+        console.warn("/generate call failed:", err);
+      });
     } catch (error) {
-      console.error('Failed to change stress mode:', error);
+      console.error("Failed to change stress mode:", error);
     } finally {
       setTimeout(() => setIsChanging(false), 300);
     }
@@ -88,7 +124,9 @@ export default function ActivityControlPanel({ latestFeatures }: ActivityControl
 
   const runInference = useCallback(async () => {
     if (!featurePayload) {
-      setPredictionError('Waiting for live telemetry before running inference.');
+      setPredictionError(
+        "Waiting for live telemetry before running inference."
+      );
       return;
     }
     setIsPredicting(true);
@@ -97,14 +135,17 @@ export default function ActivityControlPanel({ latestFeatures }: ActivityControl
     setPredictionDetails(null);
 
     try {
-      console.log('Sending prediction request with body:', JSON.stringify(featurePayload));
+      console.log(
+        "Sending prediction request with body:",
+        JSON.stringify(featurePayload)
+      );
       const response = await fetch(DEFAULT_PREDICTION_ENDPOINT, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(featurePayload),
-        cache: 'no-store',
+        cache: "no-store",
       });
 
       if (!response.ok) {
@@ -112,28 +153,32 @@ export default function ActivityControlPanel({ latestFeatures }: ActivityControl
       }
 
       const data = await response.json();
-      const rawPrediction = (data?.prediction ?? data?.result ?? data) as unknown;
+      const rawPrediction = (data?.prediction ??
+        data?.result ??
+        data) as unknown;
 
       let interpretedDetails: Record<string, unknown> | null = null;
-      if (typeof rawPrediction === 'number') {
-        setPredictionResult(rawPrediction === 1 ? 'Stressed' : 'Not stressed');
-      } else if (typeof rawPrediction === 'string') {
+      if (typeof rawPrediction === "number") {
+        setPredictionResult(rawPrediction === 1 ? "Stressed" : "Not stressed");
+      } else if (typeof rawPrediction === "string") {
         setPredictionResult(rawPrediction);
-      } else if (rawPrediction && typeof rawPrediction === 'object') {
+      } else if (rawPrediction && typeof rawPrediction === "object") {
         const nested = rawPrediction as Record<string, unknown>;
-        if (typeof nested.prediction === 'number') {
-          setPredictionResult(nested.prediction === 1 ? 'Stressed' : 'Not stressed');
-        } else if (typeof nested.label === 'string') {
+        if (typeof nested.prediction === "number") {
+          setPredictionResult(
+            nested.prediction === 1 ? "Stressed" : "Not stressed"
+          );
+        } else if (typeof nested.label === "string") {
           setPredictionResult(nested.label);
         } else {
-          setPredictionResult('See details below');
+          setPredictionResult("See details below");
         }
         interpretedDetails = nested;
       } else {
-        setPredictionResult('Prediction received');
+        setPredictionResult("Prediction received");
       }
 
-      if (!interpretedDetails && data && typeof data === 'object') {
+      if (!interpretedDetails && data && typeof data === "object") {
         interpretedDetails = data as Record<string, unknown>;
       }
 
@@ -141,8 +186,10 @@ export default function ActivityControlPanel({ latestFeatures }: ActivityControl
         setPredictionDetails(interpretedDetails);
       }
     } catch (error) {
-      console.error('Failed to perform stress inference', error);
-      setPredictionError('Failed to reach the stress inference service. Ensure FastAPI is running.');
+      console.error("Failed to perform stress inference", error);
+      setPredictionError(
+        "Failed to reach the stress inference service. Ensure FastAPI is running."
+      );
     } finally {
       setIsPredicting(false);
     }
@@ -179,33 +226,33 @@ export default function ActivityControlPanel({ latestFeatures }: ActivityControl
             disabled={isChanging}
             className={`
               w-full p-4 rounded-lg transition-all duration-300
-              ${activeMode === state.mode
-                ? `bg-gradient-to-r ${state.color} shadow-lg scale-105`
-                : 'bg-gray-700 hover:bg-gray-650 hover:scale-102'
+              ${
+                activeMode === state.mode
+                  ? `bg-gradient-to-r ${state.color} shadow-lg scale-105`
+                  : "bg-gray-700 hover:bg-gray-650 hover:scale-102"
               }
-              ${isChanging ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+              ${isChanging ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
               disabled:cursor-not-allowed
             `}
           >
             <div className="flex items-center gap-3">
-              <div className={`
+              <div
+                className={`
                 p-2 rounded-lg
-                ${activeMode === state.mode
-                  ? 'bg-white/20'
-                  : 'bg-gray-600'
-                }
-              `}>
+                ${activeMode === state.mode ? "bg-white/20" : "bg-gray-600"}
+              `}
+              >
                 {state.icon}
               </div>
               <div className="flex-1 text-left">
-                <div className="font-semibold text-white">
-                  {state.label}
-                </div>
-                <div className={`text-xs ${
-                  activeMode === state.mode
-                    ? 'text-white/80'
-                    : 'text-gray-400'
-                }`}>
+                <div className="font-semibold text-white">{state.label}</div>
+                <div
+                  className={`text-xs ${
+                    activeMode === state.mode
+                      ? "text-white/80"
+                      : "text-gray-400"
+                  }`}
+                >
                   {state.description}
                 </div>
               </div>
@@ -218,21 +265,29 @@ export default function ActivityControlPanel({ latestFeatures }: ActivityControl
       </div>
 
       <div className="mt-7 p-5 bg-gray-900 rounded-xl border border-dashed border-gray-600">
-        <h4 className="text-sm font-semibold text-gray-300 mb-3">Model Inference Preview</h4>
+        <h4 className="text-sm font-semibold text-gray-300 mb-3">
+          Model Inference Preview
+        </h4>
         <div className="space-y-4">
           <div className="rounded-lg border border-gray-700/60 bg-gray-800/60 p-4 text-xs text-gray-300">
-            <div className="font-semibold text-gray-200 mb-2">Latest feature snapshot</div>
+            <div className="font-semibold text-gray-200 mb-2">
+              Latest feature snapshot
+            </div>
             {featurePayload ? (
               <dl className="grid grid-cols-2 gap-2">
                 {Object.entries(featurePayload).map(([key, value]) => (
                   <div key={key} className="flex justify-between">
-                    <dt className="uppercase tracking-wide text-gray-500">{key}</dt>
+                    <dt className="uppercase tracking-wide text-gray-500">
+                      {key}
+                    </dt>
                     <dd className="font-mono text-gray-200">{value}</dd>
                   </div>
                 ))}
               </dl>
             ) : (
-              <p className="text-gray-500 text-center">Awaiting live telemetry...</p>
+              <p className="text-gray-500 text-center">
+                Awaiting live telemetry...
+              </p>
             )}
           </div>
           <button
@@ -240,12 +295,13 @@ export default function ActivityControlPanel({ latestFeatures }: ActivityControl
             disabled={isPredicting || !featurePayload}
             className="w-full py-3 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold hover:from-indigo-400 hover:to-purple-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isPredicting ? 'Requesting prediction...' : 'Run Stress Inference'}
+            {isPredicting ? "Requesting prediction..." : "Run Stress Inference"}
           </button>
           {predictionResult && (
             <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4">
               <p className="text-sm font-semibold text-emerald-300">
-                Prediction: <span className="text-white">{predictionResult}</span>
+                Prediction:{" "}
+                <span className="text-white">{predictionResult}</span>
               </p>
               {predictionDetails && (
                 <pre className="mt-3 text-xs text-gray-300 bg-gray-900/60 rounded-lg p-3 overflow-x-auto">
@@ -263,9 +319,7 @@ export default function ActivityControlPanel({ latestFeatures }: ActivityControl
       </div>
 
       <div className="mt-7 p-5 bg-gray-900 rounded-xl border border-gray-700">
-        <div className="text-xs text-gray-400 text-center">
-          Current Mode
-        </div>
+        <div className="text-xs text-gray-400 text-center">Current Mode</div>
         <div className="text-center text-white font-bold mt-2 text-lg">
           {activeLabel}
         </div>

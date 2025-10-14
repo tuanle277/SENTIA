@@ -631,9 +631,8 @@ def create_dataframe_for_trial(ecg_data, eeg_data, valence_data, arousal_data, d
     step_len_samples = STEP_SIZE_SECONDS * SAMPLING_RATE
     
     total_samples = ecg_data.shape[0]
-
     print(f"Processing {total_samples} samples into {WINDOW_SIZE_SECONDS}s windows...")
-
+    print(total_samples, window_len_samples, step_len_samples)
     # Slide the window across the data
     for i in range(0, total_samples - window_len_samples + 1, step_len_samples):
         window_id = i // step_len_samples
@@ -663,6 +662,7 @@ def create_dataframe_for_trial(ecg_data, eeg_data, valence_data, arousal_data, d
             'dominance': dominance,
             'stress_label': stress_label
         }
+        print(current_window_data)
         current_window_data.update(ecg_features)
         current_window_data.update(eeg_features)
         
@@ -698,10 +698,9 @@ def access_all_dreamer_data(subject_id: int, trial_id: int):
         dreamer_struct = mat_data['DREAMER'][0, 0]
         
         # Access the 'Data' field which contains the array of subjects
-        all_subject_data = dreamer_struct['Data'][0, 0]
+        all_subject_data = dreamer_struct['Data']
 
         # Select the specific subject from the 'Data' array
-        print(all_subject_data.shape)
         subject_struct = all_subject_data[0, subject_id - 1]
         
     except (KeyError, IndexError) as e:
@@ -743,15 +742,18 @@ def access_all_dreamer_data(subject_id: int, trial_id: int):
             eeg_stimuli_resampled = resample(eeg_stimuli[i, 0], num_samples_ecg)
         elif num_samples_eeg < num_samples_ecg:
             ecg_stimuli_resampled = resample(ecg_stimuli[i, 0], num_samples_eeg)
-
+        else:
+            eeg_stimuli_resampled = eeg_stimuli[i, 0]
+            ecg_stimuli_resampled = ecg_stimuli[i, 0]
+        print(eeg_stimuli_resampled.shape, ecg_stimuli_resampled.shape, valence_scores[i, 0].shape, arousal_scores[i, 0].shape, dominance_scores[i, 0].shape)
         vid = {
-            'ECG': ecg_stimuli_resampled,
-            'EEG': eeg_stimuli[i, 0],
+            'ECG': ecg_stimuli_resampled[i, 0],
+            'EEG': eeg_stimuli_resampled[i, 0],
             'valence': np.array([valence_scores[i, 0]] * ecg_stimuli_resampled.shape[0]),
             'arousal': np.array([arousal_scores[i, 0]] * ecg_stimuli_resampled.shape[0]),
             'dominance': np.array([dominance_scores[i, 0]] * ecg_stimuli_resampled.shape[0])
         }
-
+        print(vid['ECG'].shape, vid['EEG'].shape, vid['valence'].shape, vid['arousal'].shape, vid['dominance'].shape)
         df = create_dataframe_for_trial(vid['ECG'], vid['EEG'], vid['valence'], vid['arousal'], vid['dominance'])
         final_df.append(df)
 
@@ -767,22 +769,15 @@ def access_all_dreamer_data(subject_id: int, trial_id: int):
     else:
         print("\nEEG signal data is not available for this subject.")
 
+
+# Utility to run DREAMER extraction for all 23 subjects
+def process_all_dreamer_subjects():
+    """
+    Iterate over all 23 DREAMER subjects and run the extraction routine.
+    """
+    for sid in range(1, 24):
+        access_all_dreamer_data(sid, 1)
+
 # Example usagerin
 if __name__ == '__main__':
-    # access_all_dreamer_data(1, 1)
-
-    # wesad_df = pd.read_csv("./data/processed/features_dataset.csv")
-    # dreamer_df = pd.read_csv("./data/processed/dreamer_features_1_1.csv")
-    # wesad_cols = {col: col.replace('BVP_', '') for col in wesad_df.columns if col.startswith('BVP_')}
-    # wesad_df = wesad_df.rename(columns=wesad_cols)
-    # print(wesad_df.shape)
-    # print(dreamer_df.shape)
-    # # Compare the columns of wesad_df and dreamer_df
-    # # Concatenate the two DataFrames
-    # # The `sort=False` argument is used to maintain column order
-    # merged_df = pd.concat([wesad_df, dreamer_df], ignore_index=True, sort=False)
-
-    # # Fill all NaN values with 0
-    # merged_df = merged_df.fillna(0)
-    # merged_df.to_csv("./data/processed/merged_features_dataset.csv", index=False)
-    pass
+    process_all_dreamer_subjects()
