@@ -7,12 +7,28 @@ import ActivityControlPanel from "./components/ActivityControlPanel";
 import TimeScaleControl from "./components/TimeScaleControl";
 import { Activity, Droplet, Gauge, Thermometer, Loader2 } from "lucide-react";
 
+type StreamSource =
+  | "simulated"
+  | "real_all"
+  | "real_not_stressed"
+  | "real_stressed";
+
+interface StreamMeta {
+  source: StreamSource;
+  availableRealSamples?: {
+    all: number;
+    notStressed: number;
+    stressed: number;
+  };
+}
+
 interface FeatureStreamData {
   timestamp: number;
   hrvMeanNN: number;
   edaMean: number;
   accMagMean: number;
   tempMean: number;
+  stressLabel?: number;
 }
 
 interface ChartDataPoint {
@@ -40,7 +56,7 @@ export default function Dashboard() {
   const [connectionStatus, setConnectionStatus] = useState<
     "connecting" | "connected" | "disconnected"
   >("connecting");
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [streamMeta, setStreamMeta] = useState<StreamMeta | null>(null);
 
   const connectToStream = useCallback(() => {
     const eventSource = new EventSource("/api/stream");
@@ -51,8 +67,12 @@ export default function Dashboard() {
 
     eventSource.onmessage = (event) => {
       try {
-        const data: FeatureStreamData = JSON.parse(event.data);
-        console.log("Received stream data:", data);
+        const parsed = JSON.parse(event.data) as FeatureStreamData & {
+          __meta?: StreamMeta;
+        };
+        const { __meta, ...features } = parsed;
+        const data = features as FeatureStreamData;
+        setStreamMeta((prev) => (__meta ? __meta : prev));
         setCurrentData(data);
 
         setHrvHistory((prev) => {
@@ -150,16 +170,16 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex justify-center">
-      <div className="w-full max-w-[1920px] px-8 py-8">
+    <div className="min-h-screen bg-slate-100 flex justify-center">
+      <div className="w-full max-w-[1920px] px-8 py-10">
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2">
+              <h1 className="text-4xl font-bold text-slate-900 mb-2">
                 Health Dashboard
               </h1>
-              <p className="text-gray-400">
+              <p className="text-slate-600">
                 Real-time wearable metrics monitoring
               </p>
             </div>
@@ -167,13 +187,13 @@ export default function Dashboard() {
               <div
                 className={`w-3 h-3 rounded-full ${
                   connectionStatus === "connected"
-                    ? "bg-green-500 animate-pulse"
+                    ? "bg-emerald-500 animate-pulse"
                     : connectionStatus === "connecting"
-                    ? "bg-yellow-500 animate-pulse"
-                    : "bg-red-500"
+                    ? "bg-amber-400 animate-pulse"
+                    : "bg-rose-500"
                 }`}
               ></div>
-              <span className="text-gray-400 text-sm capitalize">
+              <span className="text-slate-600 text-sm capitalize">
                 {connectionStatus}
               </span>
             </div>
@@ -188,31 +208,31 @@ export default function Dashboard() {
                 {/* Primary Metrics Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
                   <MetricCard
-                    title="HRV Mean NN"
-                    value={currentData.hrvMeanNN.toFixed(0)}
-                    unit="ms"
-                    icon={<Activity className="w-6 h-6 text-cyan-400" />}
+                    title="Mean Heart Rate"
+                    value={(60000 / currentData.hrvMeanNN).toFixed(0)}
+                    unit="BPM"
+                    icon={<Activity className="w-6 h-6 text-cyan-600" />}
                     status={getHrvStatus(currentData.hrvMeanNN)}
                   />
                   <MetricCard
                     title="EDA Mean"
                     value={currentData.edaMean.toFixed(3)}
                     unit="uS"
-                    icon={<Droplet className="w-6 h-6 text-blue-400" />}
+                    icon={<Droplet className="w-6 h-6 text-sky-600" />}
                     status={getEdaStatus(currentData.edaMean)}
                   />
                   <MetricCard
                     title="ACC Magnitude"
                     value={currentData.accMagMean.toFixed(2)}
                     unit="g"
-                    icon={<Gauge className="w-6 h-6 text-purple-400" />}
+                    icon={<Gauge className="w-6 h-6 text-violet-600" />}
                     status={getAccStatus(currentData.accMagMean)}
                   />
                   <MetricCard
                     title="Skin Temperature"
                     value={currentData.tempMean.toFixed(2)}
                     unit="°C"
-                    icon={<Thermometer className="w-6 h-6 text-orange-400" />}
+                    icon={<Thermometer className="w-6 h-6 text-amber-600" />}
                     status={getTempStatus(currentData.tempMean)}
                   />
                 </div>
@@ -220,16 +240,14 @@ export default function Dashboard() {
                 {/* Charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   <RealtimeChart
-                    data={hrvHistory}
-                    title="HRV Mean NN Trend"
+                    data={hrvHistory.map((point) => ({
+                      ...point,
+                      value: 60000 / point.value,
+                    }))}
+                    title="Mean Heart Rate Trend"
                     color="#22D3EE"
-                    unit=" ms"
-                    domain={[
-                      FEATURE_BASELINES.hrvMeanNN.mean -
-                        FEATURE_BASELINES.hrvMeanNN.std * 2,
-                      FEATURE_BASELINES.hrvMeanNN.mean +
-                        FEATURE_BASELINES.hrvMeanNN.std * 2,
-                    ]}
+                    unit=" BPM"
+                    domain={[30, 200]}
                   />
                   <RealtimeChart
                     data={edaHistory}
@@ -263,12 +281,7 @@ export default function Dashboard() {
                     title="Skin Temperature Trend"
                     color="#FACC15"
                     unit=" °C"
-                    domain={[
-                      FEATURE_BASELINES.tempMean.mean -
-                        FEATURE_BASELINES.tempMean.std * 3,
-                      FEATURE_BASELINES.tempMean.mean +
-                        FEATURE_BASELINES.tempMean.std * 3,
-                    ]}
+                    domain={[30, 40]}
                   />
                 </div>
 
@@ -284,8 +297,8 @@ export default function Dashboard() {
             ) : (
               <div className="flex items-center justify-center h-96">
                 <div className="text-center">
-                  <Loader2 className="w-16 h-16 text-gray-600 animate-spin mx-auto mb-4" />
-                  <p className="text-gray-400 text-lg">
+                  <Loader2 className="w-16 h-16 text-slate-400 animate-spin mx-auto mb-4" />
+                  <p className="text-slate-500 text-lg">
                     Connecting to wearable device...
                   </p>
                 </div>
@@ -295,7 +308,10 @@ export default function Dashboard() {
 
           {/* Activity Control Panel */}
           <div className="w-[420px] flex-shrink-0">
-            <ActivityControlPanel latestFeatures={currentData} />
+            <ActivityControlPanel
+              latestFeatures={currentData}
+              streamMeta={streamMeta}
+            />
             <TimeScaleControl />
           </div>
         </div>

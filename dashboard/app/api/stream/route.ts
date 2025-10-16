@@ -5,6 +5,11 @@ export const dynamic = "force-dynamic";
 
 type FeatureKey = "hrvMeanNN" | "edaMean" | "accMagMean" | "tempMean";
 type StressMode = "not_stressed" | "stressed";
+type StreamingSource =
+  | "simulated"
+  | "real_all"
+  | "real_not_stressed"
+  | "real_stressed";
 
 interface FeatureStreamData {
   timestamp: number;
@@ -12,6 +17,7 @@ interface FeatureStreamData {
   edaMean: number;
   accMagMean: number;
   tempMean: number;
+  stressLabel?: number;
 }
 
 interface FeatureStats {
@@ -39,6 +45,13 @@ interface RunningStats {
 
 type StatsTable = Record<FeatureKey, RunningStats>;
 type StressStats = Record<StressMode, StatsTable>;
+interface RealDataRecord {
+  hrvMeanNN: number;
+  edaMean: number;
+  accMagMean: number;
+  tempMean: number;
+  stressLabel: number;
+}
 
 const FEATURE_KEYS: FeatureKey[] = [
   "hrvMeanNN",
@@ -148,44 +161,79 @@ const CSV_COLUMN_MAP: Record<FeatureKey, string> = {
   accMagMean: "ACC_Mag_Mean",
   tempMean: "TEMP_Mean",
 };
+const REAL_DATASET_FILE = path.resolve(
+  process.cwd(),
+  "..",
+  "data",
+  "processed",
+  "stream_features_dataset.csv"
+);
 
-// Align validation with the same predictor used by the UI
-// Prefer local predictor by default to avoid remote TLS issues during dev
-const PREDICT_ENDPOINT =
-  process.env.NEXT_PUBLIC_PREDICT_ENDPOINT || "http://localhost:5000/predict";
-
-function toPredictorPayload(sample: FeatureStreamData): Record<string, number> {
-  return {
-    HRV_MeanNN: Number(sample.hrvMeanNN.toFixed(3)),
-    EDA_Mean: Number(sample.edaMean.toFixed(3)),
-    ACC_Mag_Mean: Number(sample.accMagMean.toFixed(3)),
-    TEMP_Mean: Number(sample.tempMean.toFixed(3)),
-  };
-}
-
-function extractConfidenceFromResponse(json: unknown): number | null {
-  if (json == null) return null;
-  const data = json as Record<string, unknown>;
-  const nested =
-    (data.result as Record<string, unknown> | undefined) ?? undefined;
-  const candidates = [
-    data.probability,
-    data.prob,
-    data.confidence,
-    nested?.probability,
-    nested?.prob,
-  ];
-  for (const c of candidates) {
-    if (typeof c === "number" && Number.isFinite(c)) return c;
+function loadRealDataset(): RealDataRecord[] {
+  if (!existsSync(REAL_DATASET_FILE)) {
+    console.warn(
+      "[stream api] stream_features_dataset.csv not found; real streaming disabled."
+    );
+    return [];
   }
-  const pred = (data.prediction ?? data.label) as unknown;
-  if (typeof pred === "number") return pred === 1 ? 0.99 : 0.01;
-  if (typeof pred === "string") {
-    const s = pred.toLowerCase();
-    if (s.includes("stress")) return 0.99;
-    if (s.includes("not")) return 0.01;
+
+  try {
+    const raw = readFileSync(REAL_DATASET_FILE, "utf-8");
+    const lines = raw.split(/\r?\n/).filter((line) => line.trim().length > 0);
+    if (lines.length < 2) {
+      console.warn("[stream api] stream_features_dataset.csv empty.");
+      return [];
+    }
+
+    const header = lines[0].split(",");
+    const indexMap: Record<string, number> = {};
+    header.forEach((col, idx) => {
+      indexMap[col] = idx;
+    });
+    const required = [
+      "HRV_MeanNN",
+      "EDA_Mean",
+      "ACC_Mag_Mean",
+      "TEMP_Mean",
+      "stress_label",
+    ];
+    if (required.some((col) => indexMap[col] === undefined)) {
+      console.warn(
+        "[stream api] stream_features_dataset.csv missing required columns."
+      );
+      return [];
+    }
+
+    const records: RealDataRecord[] = [];
+    for (let i = 1; i < lines.length; i += 1) {
+      const row = lines[i];
+      if (!row) continue;
+      const cells = row.split(",");
+      const record: RealDataRecord = {
+        hrvMeanNN: Number.parseFloat(cells[indexMap["HRV_MeanNN"]]),
+        edaMean: Number.parseFloat(cells[indexMap["EDA_Mean"]]),
+        accMagMean: Number.parseFloat(cells[indexMap["ACC_Mag_Mean"]]),
+        tempMean: Number.parseFloat(cells[indexMap["TEMP_Mean"]]),
+        stressLabel: Number.parseInt(cells[indexMap["stress_label"]], 10) || 0,
+      };
+      if (
+        Number.isFinite(record.hrvMeanNN) &&
+        Number.isFinite(record.edaMean) &&
+        Number.isFinite(record.accMagMean) &&
+        Number.isFinite(record.tempMean)
+      ) {
+        records.push(record);
+      }
+    }
+
+    return records;
+  } catch (error) {
+    console.error(
+      "[stream api] Failed to load stream_features_dataset.csv",
+      error
+    );
+    return [];
   }
-  return null;
 }
 
 function loadStressProfiles(): Record<StressMode, StressProfile> {
@@ -327,40 +375,13 @@ function loadStressProfiles(): Record<StressMode, StressProfile> {
 }
 
 const stressProfiles = loadStressProfiles();
-let validationEnabled = process.env.STRESS_VALIDATION_ENABLED !== "false";
-
-// Feature separation directions: values tend to be higher in stressed (+1) or lower (-1)
-const FEATURE_DIRECTION: Record<FeatureKey, 1 | -1> = {
-  hrvMeanNN: -1,
-  edaMean: 1,
-  accMagMean: 1,
-  tempMean: 1,
-};
-
-function getBiasedTarget(
-  stats: FeatureStats,
-  key: FeatureKey,
-  mode: StressMode
-): number {
-  const direction = FEATURE_DIRECTION[key];
-  const std = stats.std > 0 ? stats.std : stats.grad || 1;
-  // Stronger margin toward class-distinctive side for stressed, milder for not_stressed
-  const marginMultiplier = mode === "stressed" ? 0.8 : 0.35;
-  const signedMargin = direction * std * marginMultiplier;
-  return stats.mean + signedMargin;
-}
-
-function clampAroundTarget(
-  value: number,
-  stats: FeatureStats,
-  target: number
-): number {
-  const std = stats.std > 0 ? stats.std : stats.grad || 1;
-  const halfRange = std * 1.2; // narrow band around biased target
-  const lower = target - halfRange;
-  const upper = target + halfRange;
-  return Math.max(lower, Math.min(upper, value));
-}
+const realDataRecordsAll = loadRealDataset();
+const realDataRecordsNotStressed = realDataRecordsAll.filter(
+  (item) => item.stressLabel === 0
+);
+const realDataRecordsStressed = realDataRecordsAll.filter(
+  (item) => item.stressLabel === 1
+);
 
 function randomNormal(mean = 0, std = 1): number {
   if (!Number.isFinite(std) || std <= 0) return mean;
@@ -550,48 +571,126 @@ async function generateFeatureData(
 
 let currentStressMode: StressMode = "not_stressed";
 let currentTimeScale = 1;
+let streamingSource: StreamingSource = "simulated";
+const realDataIndexes: Record<StreamingSource, number> = {
+  simulated: 0,
+  real_all: 0,
+  real_not_stressed: 0,
+  real_stressed: 0,
+};
+let simulatedData: FeatureStreamData | undefined;
+
+function getRealDatasetForSource(source: StreamingSource): RealDataRecord[] {
+  switch (source) {
+    case "real_not_stressed":
+      return realDataRecordsNotStressed;
+    case "real_stressed":
+      return realDataRecordsStressed;
+    case "real_all":
+      return realDataRecordsAll;
+    default:
+      return realDataRecordsAll;
+  }
+}
+
+function getNextRealData(source: StreamingSource): FeatureStreamData {
+  const records = getRealDatasetForSource(source);
+  if (!records.length) {
+    return generateFeatureData(undefined, currentStressMode);
+  }
+  const currentIndex = realDataIndexes[source];
+  const record = records[currentIndex];
+  realDataIndexes[source] = (currentIndex + 1) % records.length;
+  return {
+    timestamp: Date.now(),
+    hrvMeanNN: Number(
+      stepFeature(previous.hrvMeanNN, profile.stats.hrvMeanNN).toFixed(0)
+    ),
+    edaMean: Number(
+      stepFeature(previous.edaMean, profile.stats.edaMean).toFixed(3)
+    ),
+    accMagMean: Number(
+      stepFeature(previous.accMagMean, profile.stats.accMagMean).toFixed(3)
+    ),
+    tempMean: Number(
+      stepFeature(previous.tempMean, profile.stats.tempMean).toFixed(3)
+    ),
+  };
+}
+
+let currentStressMode: StressMode = "not_stressed";
+let currentTimeScale = 1;
+let streamingSource: StreamingSource = "simulated";
+const realDataIndexes: Record<StreamingSource, number> = {
+  simulated: 0,
+  real_all: 0,
+  real_not_stressed: 0,
+  real_stressed: 0,
+};
+let simulatedData: FeatureStreamData | undefined;
+
+function getRealDatasetForSource(source: StreamingSource): RealDataRecord[] {
+  switch (source) {
+    case "real_not_stressed":
+      return realDataRecordsNotStressed;
+    case "real_stressed":
+      return realDataRecordsStressed;
+    case "real_all":
+      return realDataRecordsAll;
+    default:
+      return realDataRecordsAll;
+  }
+}
+
+function getNextRealData(source: StreamingSource): FeatureStreamData {
+  const records = getRealDatasetForSource(source);
+  if (!records.length) {
+    return generateFeatureData(undefined, currentStressMode);
+  }
+  const currentIndex = realDataIndexes[source];
+  const record = records[currentIndex];
+  realDataIndexes[source] = (currentIndex + 1) % records.length;
+  return {
+    timestamp: Date.now(),
+    hrvMeanNN: Number(record.hrvMeanNN.toFixed(3)),
+    edaMean: Number(record.edaMean.toFixed(3)),
+    accMagMean: Number(record.accMagMean.toFixed(3)),
+    tempMean: Number(record.tempMean.toFixed(3)),
+    stressLabel: record.stressLabel,
+  };
+}
 
 export async function GET(request: Request) {
   const encoder = new TextEncoder();
-  let currentData = generateFeatureData(undefined, currentStressMode);
   let currentIntervalId: NodeJS.Timeout | null = null;
   let lastTimeScale = currentTimeScale;
 
   const stream = new ReadableStream({
     async start(controller) {
-      const sendData = async () => {
-        try {
-          console.log("[stream api] Generating new feature data...");
-          // notify clients that generation is in progress
-          controller.enqueue(
-            encoder.encode(
-              `event: status\ndata: ${JSON.stringify({ generating: true })}\n\n`
-            )
-          );
-          const resolved = await currentData; // await the promise to get concrete data
-          const data = `data: ${JSON.stringify(resolved)}\n\n`;
-          controller.enqueue(encoder.encode(data));
-          // prepare next tick's promise
-          currentData = generateFeatureData(resolved, currentStressMode);
-          // notify clients generation is done for this tick
-          controller.enqueue(
-            encoder.encode(
-              `event: status\ndata: ${JSON.stringify({
-                generating: false,
-              })}\n\n`
-            )
-          );
-        } catch (err) {
-          console.error(
-            "[stream api] Failed to generate or send data; using fallback.",
-            err
-          );
-          const fallback = initialiseData(currentStressMode);
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify(fallback)}\n\n`)
-          );
-          currentData = generateFeatureData(fallback, currentStressMode);
+      const sendData = () => {
+        if (streamingSource === "simulated") {
+          simulatedData = generateFeatureData(simulatedData, currentStressMode);
+        } else {
+          simulatedData = undefined;
         }
+        const payload =
+          streamingSource === "simulated"
+            ? simulatedData ?? generateFeatureData(undefined, currentStressMode)
+            : getNextRealData(streamingSource);
+
+        const meta = {
+          source: streamingSource,
+          availableRealSamples: {
+            all: realDataRecordsAll.length,
+            notStressed: realDataRecordsNotStressed.length,
+            stressed: realDataRecordsStressed.length,
+          },
+        };
+        const data = `data: ${JSON.stringify({
+          ...payload,
+          __meta: meta,
+        })}\n\n`;
+        controller.enqueue(encoder.encode(data));
       };
 
       const updateInterval = () => {
@@ -633,7 +732,37 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { mode } = body;
+    const { mode, source } = body as {
+      mode?: StressMode;
+      source?: StreamingSource;
+    };
+
+    if (source) {
+      if (
+        source === "simulated" ||
+        source === "real_all" ||
+        source === "real_not_stressed" ||
+        source === "real_stressed"
+      ) {
+        if (source !== "simulated" && !getRealDatasetForSource(source).length) {
+          return Response.json(
+            {
+              success: false,
+              error: "Requested real data stream has no samples.",
+            },
+            { status: 400 }
+          );
+        }
+        streamingSource = source;
+        realDataIndexes[source] = 0;
+        simulatedData = undefined;
+        return Response.json({ success: true, source: streamingSource });
+      }
+      return Response.json(
+        { success: false, error: "Invalid source selection" },
+        { status: 400 }
+      );
+    }
 
     if (mode && mode in stressProfiles) {
       currentStressMode = mode as StressMode;

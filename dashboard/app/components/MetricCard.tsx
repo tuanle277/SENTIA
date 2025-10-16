@@ -22,27 +22,27 @@ export default function MetricCard({
   subtitle 
 }: MetricCardProps) {
   const statusColors = {
-    normal: 'bg-green-500',
-    warning: 'bg-yellow-500',
-    danger: 'bg-red-500'
+    normal: 'bg-emerald-400',
+    warning: 'bg-amber-400',
+    danger: 'bg-rose-400'
   };
 
   const trendColors = {
-    up: 'text-red-400',
-    down: 'text-green-400',
-    stable: 'text-gray-400'
+    up: 'text-rose-500',
+    down: 'text-emerald-500',
+    stable: 'text-slate-400'
   };
 
   return (
-    <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700 hover:border-gray-600 transition-all">
+    <div className="bg-white rounded-xl p-6 shadow-md border border-slate-200 hover:border-slate-300 transition-all">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-gray-700 rounded-lg">
+          <div className="p-2 bg-slate-100 rounded-lg text-slate-700">
             {icon}
           </div>
           <div>
-            <p className="text-gray-400 text-sm font-medium">{title}</p>
-            {subtitle && <p className="text-gray-500 text-xs">{subtitle}</p>}
+            <p className="text-slate-500 text-sm font-medium">{title}</p>
+            {subtitle && <p className="text-slate-400 text-xs">{subtitle}</p>}
           </div>
         </div>
         <div className={`w-2 h-2 rounded-full ${statusColors[status]}`}></div>
@@ -51,10 +51,10 @@ export default function MetricCard({
       <div className="flex items-end justify-between">
         <div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-white">
+            <span className="text-3xl font-bold text-slate-900">
               {typeof value === 'number' ? value.toFixed(1) : value}
             </span>
-            {unit && <span className="text-gray-400 text-lg">{unit}</span>}
+            {unit && <span className="text-slate-500 text-lg">{unit}</span>}
           </div>
         </div>
         
@@ -69,4 +69,3 @@ export default function MetricCard({
     </div>
   );
 }
-

@@ -15,22 +15,22 @@ export default function ActivityIndicator({ level }: ActivityIndicatorProps) {
   const current = levels[level];
 
   return (
-    <div className="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-700">
-      <h3 className="text-lg font-semibold text-white mb-4">Activity Level</h3>
+    <div className="bg-white rounded-xl p-6 shadow-md border border-slate-200">
+      <h3 className="text-lg font-semibold text-slate-900 mb-4">Activity Level</h3>
       <div className="flex flex-col items-center gap-4">
         <div className="flex items-end gap-2 h-24">
           {[1, 2, 3, 4].map((bar) => (
             <div
               key={bar}
               className={`w-10 rounded-t-lg transition-all duration-500 ${
-                bar <= current.bars ? current.color : 'bg-gray-700'
+                bar <= current.bars ? current.color : 'bg-slate-200'
               }`}
               style={{ height: `${bar * 25}%` }}
             />
           ))}
         </div>
         <div className="text-center">
-          <p className="text-xl font-bold text-white">
+          <p className="text-xl font-bold text-slate-900">
             {current.text}
           </p>
         </div>
@@ -38,4 +38,3 @@ export default function ActivityIndicator({ level }: ActivityIndicatorProps) {
     </div>
   );
 }
-
