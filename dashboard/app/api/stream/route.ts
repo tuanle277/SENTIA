@@ -409,198 +409,33 @@ function initialiseData(mode: StressMode): FeatureStreamData {
   const result: Partial<FeatureStreamData> = { timestamp: Date.now() };
   for (const key of FEATURE_KEYS) {
     const stats = profile.stats[key];
-    const std = stats.std > 0 ? stats.std : stats.grad || 1;
-    const target = getBiasedTarget(stats, key, mode);
-    const sampled = randomNormal(target, std * 0.25);
-    const clamped = clampAroundTarget(sampled, stats, target);
-    result[key] = Number(clamped.toFixed(key === "hrvMeanNN" ? 0 : 3));
+    const baselineStd = stats.std > 0 ? stats.std : stats.grad || 1;
+    const sampled = randomNormal(stats.mean, baselineStd * 0.5);
+    result[key] = Number(
+      clampValue(sampled, stats).toFixed(key === "hrvMeanNN" ? 0 : 3)
+    );
   }
   return result as FeatureStreamData;
 }
 
-function stepFeature(
-  previous: number,
-  stats: FeatureStats,
-  key: FeatureKey,
-  mode: StressMode
-): number {
-  const smoothing = 0.3;
+function stepFeature(previous: number, stats: FeatureStats): number {
+  const smoothing = 0.15;
+  const target = stats.mean;
   const baseStd = stats.std > 0 ? stats.std : stats.grad || 1;
-  const target = getBiasedTarget(stats, key, mode);
-  const gradientNoise = stats.grad ? stats.grad * 0.35 : baseStd * 0.035;
+  const gradientNoise = stats.grad || baseStd * 0.1;
   const noise = randomNormal(0, gradientNoise);
   const next = previous + (target - previous) * smoothing + noise;
-  return clampAroundTarget(next, stats, target);
+  return clampValue(next, stats);
 }
 
-async function generateFeatureData(
+function generateFeatureData(
   previous: FeatureStreamData | undefined,
   mode: StressMode
-): Promise<FeatureStreamData> {
+): FeatureStreamData {
   if (!previous) {
     return initialiseData(mode);
   }
-
   const profile = stressProfiles[mode];
-
-  // Function to generate a single feature data object
-  const generateSingleFeatureData = (): FeatureStreamData => ({
-    timestamp: Date.now(),
-    hrvMeanNN: Number(
-      stepFeature(
-        previous.hrvMeanNN,
-        profile.stats.hrvMeanNN,
-        "hrvMeanNN",
-        mode
-      ).toFixed(0)
-    ),
-    edaMean: Number(
-      stepFeature(
-        previous.edaMean,
-        profile.stats.edaMean,
-        "edaMean",
-        mode
-      ).toFixed(3)
-    ),
-    accMagMean: Number(
-      stepFeature(
-        previous.accMagMean,
-        profile.stats.accMagMean,
-        "accMagMean",
-        mode
-      ).toFixed(3)
-    ),
-    tempMean: Number(
-      stepFeature(
-        previous.tempMean,
-        profile.stats.tempMean,
-        "tempMean",
-        mode
-      ).toFixed(3)
-    ),
-  });
-
-  let featureData: FeatureStreamData;
-  let isValid = false;
-  let attempts = 0;
-  const validationThreshold = 0.8;
-  const maxValidationAttempts = 8;
-  const requestTimeoutMs = 1500;
-  // Circuit breaker for remote predictor
-  // If remote endpoint fails once, skip trying it for a cooldown period
-  const remoteCooldownMs = 5 * 60 * 1000;
-  let staticRemoteBlockedUntil = (generateFeatureData as any)
-    .remoteBlockedUntil as number | undefined;
-  if (typeof staticRemoteBlockedUntil !== "number") {
-    staticRemoteBlockedUntil = 0;
-  }
-  const nowTs = Date.now();
-
-  // If validation disabled, just return one generated sample
-  if (!validationEnabled) {
-    return generateSingleFeatureData();
-  }
-
-  // Keep generating feature data until the confidence is high enough
-  while (!isValid && attempts < maxValidationAttempts) {
-    featureData = generateSingleFeatureData();
-    console.log("Checking confidence with data:", featureData);
-
-    // Call the /check API endpoint to validate the confidence
-    try {
-      const abortController = new AbortController();
-      const timeoutId = setTimeout(
-        () => abortController.abort(),
-        requestTimeoutMs
-      );
-
-      // try primary predictor first (skipped during cooldown)
-      let response: Response | undefined;
-      if (nowTs >= staticRemoteBlockedUntil) {
-        response = await fetch(PREDICT_ENDPOINT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(toPredictorPayload(featureData)),
-          signal: abortController.signal,
-        });
-      }
-      // if remote skipped or failed, response may be undefined; try local as fallback
-      if (!response || !response.ok) {
-        try {
-          response = await fetch("http://localhost:5000/predict", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(toPredictorPayload(featureData)),
-            signal: abortController.signal,
-          });
-        } catch {}
-      }
-
-      console.log("Checking confidence with data:", featureData, response);
-
-      if (!response.ok) {
-        console.error("Error checking confidence:", await response.text());
-        throw new Error("Failed to check confidence");
-      }
-
-      const result = await response.json();
-      const confidence = extractConfidenceFromResponse(result);
-      isValid = confidence !== null ? confidence >= validationThreshold : true;
-      clearTimeout(timeoutId);
-    } catch (error) {
-      // Block remote endpoint for a cooldown window on network failure
-      (generateFeatureData as any).remoteBlockedUntil =
-        Date.now() + remoteCooldownMs;
-      // Throttle noisy logs
-      if (attempts === 0) {
-        console.warn(
-          "Confidence check failed or timed out; proceeding with generated data.",
-          (error as Error)?.message ?? error
-        );
-      }
-      // Break out to avoid stalling the stream if the checker is down
-      isValid = true;
-    }
-    attempts += 1;
-  }
-
-  return featureData!;
-}
-
-let currentStressMode: StressMode = "not_stressed";
-let currentTimeScale = 1;
-let streamingSource: StreamingSource = "simulated";
-const realDataIndexes: Record<StreamingSource, number> = {
-  simulated: 0,
-  real_all: 0,
-  real_not_stressed: 0,
-  real_stressed: 0,
-};
-let simulatedData: FeatureStreamData | undefined;
-
-function getRealDatasetForSource(source: StreamingSource): RealDataRecord[] {
-  switch (source) {
-    case "real_not_stressed":
-      return realDataRecordsNotStressed;
-    case "real_stressed":
-      return realDataRecordsStressed;
-    case "real_all":
-      return realDataRecordsAll;
-    default:
-      return realDataRecordsAll;
-  }
-}
-
-function getNextRealData(source: StreamingSource): FeatureStreamData {
-  const records = getRealDatasetForSource(source);
-  if (!records.length) {
-    return generateFeatureData(undefined, currentStressMode);
-  }
-  const currentIndex = realDataIndexes[source];
-  const record = records[currentIndex];
-  realDataIndexes[source] = (currentIndex + 1) % records.length;
   return {
     timestamp: Date.now(),
     hrvMeanNN: Number(

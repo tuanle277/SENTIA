@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -44,6 +45,8 @@ interface StressButton {
 interface ActivityControlPanelProps {
   latestFeatures: FeatureSnapshot | null;
   streamMeta: StreamMeta | null;
+  onStressTrigger?: (timestamp: number) => void;
+  monitoringPaused?: boolean;
 }
 
 const stressStates: StressButton[] = [
@@ -64,8 +67,7 @@ const stressStates: StressButton[] = [
 ];
 
 const DEFAULT_PREDICTION_ENDPOINT =
-  process.env.NEXT_PUBLIC_STRESS_API_URL ??
-  "https://subsinuous-inundant-lorie.ngrok-free.dev/predict";
+  process.env.NEXT_PUBLIC_STRESS_API_URL ?? "http://127.0.0.1:5000/predict";
 
 const REAL_SOURCE_LABELS: Record<Exclude<StreamSource, "simulated">, string> = {
   real_all: "Real Stream (All Samples)",
@@ -81,6 +83,8 @@ const describeRealSource = (source: StreamSource): string | null => {
 export default function ActivityControlPanel({
   latestFeatures,
   streamMeta,
+  onStressTrigger,
+  monitoringPaused = false,
 }: ActivityControlPanelProps) {
   const [activeMode, setActiveMode] = useState<StressMode>("not_stressed");
   const [isChanging, setIsChanging] = useState(false);
@@ -91,6 +95,8 @@ export default function ActivityControlPanel({
     unknown
   > | null>(null);
   const [predictionError, setPredictionError] = useState<string | null>(null);
+  const lastTriggerRef = useRef<number>(0);
+  const lastWasStressedRef = useRef<boolean>(false);
   const [streamSource, setStreamSource] = useState<StreamSource>(
     streamMeta?.source ?? "simulated"
   );
@@ -109,7 +115,6 @@ export default function ActivityControlPanel({
     setActiveMode(mode);
     setIsChanging(true);
     try {
-      // 1) Trigger server stream mode change (affects live SSE)
       const response = await fetch("/api/stream", {
         method: "POST",
         headers: {
@@ -121,13 +126,6 @@ export default function ActivityControlPanel({
       if (!response.ok) {
         throw new Error(`Failed to switch mode (${response.status})`);
       }
-
-      // 2) Trigger backend synthetic generator for the selected class
-      //    Map: not_stressed -> 0, stressed -> 1
-      const targetClass = mode === "stressed" ? 1 : 0;
-      void callGenerate(targetClass, 250).catch((err) => {
-        console.warn("/generate call failed:", err);
-      });
     } catch (error) {
       console.error("Failed to change stress mode:", error);
       setActiveMode(previous);
@@ -174,18 +172,37 @@ export default function ActivityControlPanel({
         data) as unknown;
 
       let interpretedDetails: Record<string, unknown> | null = null;
+      const maybeTrigger = (label: string) => {
+        const isStressed = label.toLowerCase().includes("stress");
+        const now = Date.now();
+        const cooldownMs = 8000; // 8s cooldown to avoid spamming
+        if (
+          isStressed &&
+          (!lastWasStressedRef.current ||
+            now - lastTriggerRef.current > cooldownMs)
+        ) {
+          onStressTrigger?.(now);
+          lastTriggerRef.current = now;
+        }
+        lastWasStressedRef.current = isStressed;
+      };
+
       if (typeof rawPrediction === "number") {
-        setPredictionResult(rawPrediction === 1 ? "Stressed" : "Not stressed");
+        const label = rawPrediction === 1 ? "Stressed" : "Not stressed";
+        setPredictionResult(label);
+        maybeTrigger(label);
       } else if (typeof rawPrediction === "string") {
         setPredictionResult(rawPrediction);
+        maybeTrigger(rawPrediction);
       } else if (rawPrediction && typeof rawPrediction === "object") {
         const nested = rawPrediction as Record<string, unknown>;
         if (typeof nested.prediction === "number") {
-          setPredictionResult(
-            nested.prediction === 1 ? "Stressed" : "Not stressed"
-          );
+          const label = nested.prediction === 1 ? "Stressed" : "Not stressed";
+          setPredictionResult(label);
+          maybeTrigger(label);
         } else if (typeof nested.label === "string") {
           setPredictionResult(nested.label);
+          maybeTrigger(String(nested.label));
         } else {
           setPredictionResult("See details below");
         }
@@ -212,7 +229,7 @@ export default function ActivityControlPanel({
   }, [featurePayload]);
 
   useEffect(() => {
-    if (!featurePayload) {
+    if (!featurePayload || monitoringPaused) {
       return;
     }
 
@@ -223,7 +240,7 @@ export default function ActivityControlPanel({
     }, 500);
 
     return () => clearInterval(interval);
-  }, [featurePayload, isPredicting, runInference]);
+  }, [featurePayload, isPredicting, runInference, monitoringPaused]);
 
   const updateStreamSource = useCallback(
     async (target: StreamSource) => {

@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import MetricCard from "./components/MetricCard";
 import RealtimeChart from "./components/RealtimeChart";
 import ActivityControlPanel from "./components/ActivityControlPanel";
+import PhoneFrame from "./components/PhoneFrame";
 import TimeScaleControl from "./components/TimeScaleControl";
+import VoiceChatCard from "./components/VoiceChatCard";
 import { Activity, Droplet, Gauge, Thermometer, Loader2 } from "lucide-react";
 
 type StreamSource =
@@ -57,6 +59,11 @@ export default function Dashboard() {
     "connecting" | "connected" | "disconnected"
   >("connecting");
   const [streamMeta, setStreamMeta] = useState<StreamMeta | null>(null);
+  const [stressTriggeredAt, setStressTriggeredAt] = useState<number | null>(
+    null
+  );
+  const monitoringPaused = stressTriggeredAt !== null;
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   const connectToStream = useCallback(() => {
     const eventSource = new EventSource("/api/stream");
@@ -111,17 +118,6 @@ export default function Dashboard() {
       }
     };
 
-    eventSource.addEventListener("status", (ev) => {
-      try {
-        const payload = JSON.parse((ev as MessageEvent).data) as {
-          generating?: boolean;
-        };
-        if (typeof payload.generating === "boolean") {
-          setIsGenerating(payload.generating);
-        }
-      } catch {}
-    });
-
     eventSource.onerror = () => {
       setConnectionStatus("disconnected");
       eventSource.close();
@@ -136,9 +132,27 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
+    if (monitoringPaused) {
+      if (eventSourceRef.current) {
+        try {
+          eventSourceRef.current.close();
+        } catch {}
+        eventSourceRef.current = null;
+      }
+      setConnectionStatus("disconnected");
+      return () => {};
+    }
     const eventSource = connectToStream();
-    return () => eventSource.close();
-  }, [connectToStream]);
+    eventSourceRef.current = eventSource;
+    return () => {
+      try {
+        eventSource.close();
+      } catch {}
+      if (eventSourceRef.current === eventSource) {
+        eventSourceRef.current = null;
+      }
+    };
+  }, [connectToStream, monitoringPaused]);
 
   const getHrvStatus = (value: number) => {
     const baseline = FEATURE_BASELINES.hrvMeanNN;
@@ -171,19 +185,28 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-100 flex justify-center">
-      <div className="w-full max-w-[1920px] px-8 py-10">
+      <div className="w-full max-w-[1920px] px-6 py-6">
         {/* Header */}
-        <div className="mb-10">
+        <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-slate-900 mb-2">
+              <h1 className="text-2xl font-bold text-slate-900 mb-1">
                 Health Dashboard
               </h1>
-              <p className="text-slate-600">
+              <p className="text-slate-600 text-xs">
                 Real-time wearable metrics monitoring
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              {monitoringPaused && (
+                <button
+                  type="button"
+                  onClick={() => setStressTriggeredAt(null)}
+                  className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700"
+                >
+                  Continue Monitoring
+                </button>
+              )}
               <div
                 className={`w-3 h-3 rounded-full ${
                   connectionStatus === "connected"
@@ -199,14 +222,15 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        {/* Main Layout: Dashboard + Control Panel */}
-        <div className="flex gap-8">
+
+        {/* Main Layout: Charts + Controls + Phone */}
+        <div className="flex gap-4">
           {/* Main Dashboard Content */}
-          <div className="flex-1 min-w-0 relative">
+          <div className="flex-1 min-w-0">
             {currentData ? (
               <>
                 {/* Primary Metrics Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                   <MetricCard
                     title="Mean Heart Rate"
                     value={(60000 / currentData.hrvMeanNN).toFixed(0)}
@@ -238,7 +262,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <RealtimeChart
                     data={hrvHistory.map((point) => ({
                       ...point,
@@ -284,15 +308,6 @@ export default function Dashboard() {
                     domain={[30, 40]}
                   />
                 </div>
-
-                {isGenerating && (
-                  <div className="absolute inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center rounded-lg">
-                    <div className="flex items-center gap-3 text-gray-200 bg-gray-800/80 px-4 py-2 rounded-md border border-gray-700">
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Generating synthetic data…</span>
-                    </div>
-                  </div>
-                )}
               </>
             ) : (
               <div className="flex items-center justify-center h-96">
@@ -305,14 +320,21 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-
-          {/* Activity Control Panel */}
-          <div className="w-[420px] flex-shrink-0">
+          {/* Activity Control Panel (middle) */}
+          <div className="w-[360px] flex-shrink-0 space-y-4">
             <ActivityControlPanel
               latestFeatures={currentData}
               streamMeta={streamMeta}
+              onStressTrigger={(ts) => setStressTriggeredAt(ts)}
+              monitoringPaused={monitoringPaused}
             />
+            {monitoringPaused && <VoiceChatCard />}
             <TimeScaleControl />
+          </div>
+
+          {/* Phone (far right) */}
+          <div className="w-[320px] flex-shrink-0">
+            <PhoneFrame stressTriggeredAt={stressTriggeredAt} />
           </div>
         </div>
       </div>
