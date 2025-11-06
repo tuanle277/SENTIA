@@ -126,7 +126,7 @@ export default function ActivityControlPanel({ latestFeatures, streamMeta }: Act
       return;
     }
     setIsPredicting(true);
-    setPredictionError(null);
+    // Don't clear error here - only clear on successful response
 
     try {
       const response = await fetch(DEFAULT_PREDICTION_ENDPOINT, {
@@ -144,6 +144,9 @@ export default function ActivityControlPanel({ latestFeatures, streamMeta }: Act
 
       const data = await response.json();
       const rawPrediction = (data?.prediction ?? data?.result ?? data) as unknown;
+
+      // Clear error only on successful response
+      setPredictionError(null);
 
       let interpretedDetails: Record<string, unknown> | null = null;
       if (typeof rawPrediction === 'number') {
@@ -173,7 +176,8 @@ export default function ActivityControlPanel({ latestFeatures, streamMeta }: Act
       }
     } catch (error) {
       console.error('Failed to perform stress inference', error);
-      setPredictionError('Failed to reach the stress inference service. Ensure FastAPI is running.');
+      // Only set error if it's not already set to prevent flickering
+      setPredictionError((prev) => prev || 'Failed to reach the stress inference service. Ensure FastAPI is running.');
     } finally {
       setIsPredicting(false);
     }
@@ -281,7 +285,7 @@ export default function ActivityControlPanel({ latestFeatures, streamMeta }: Act
     streamSource === 'simulated' ? activeLabel : describeRealSource(streamSource) ?? 'Real Stream';
 
   return (
-    <div className="bg-slate-100 rounded-2xl p-7 shadow-lg border border-slate-200 sticky top-8">
+    <div className="bg-slate-100 rounded-2xl p-7 shadow-lg border border-slate-200">
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-slate-900 mb-3">Stress Simulator</h3>
         <p className="text-slate-600 text-sm leading-relaxed">
@@ -387,11 +391,14 @@ export default function ActivityControlPanel({ latestFeatures, streamMeta }: Act
               )}
             </div>
           )}
-          {predictionError && (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-              {predictionError}
-            </div>
-          )}
+          {/* Reserve space for error message to prevent layout shifts */}
+          <div className="min-h-[60px]">
+            {predictionError && (
+              <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                {predictionError}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -14,13 +14,14 @@ interface RealtimeChartProps {
   color: string;
   unit?: string;
   domain?: [number, number];
+  compact?: boolean;
 }
 
-export default function RealtimeChart({ data, title, color, unit, domain }: RealtimeChartProps) {
+export default function RealtimeChart({ data, title, color, unit, domain, compact = false }: RealtimeChartProps) {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-md border border-slate-200">
-      <h3 className="text-lg font-semibold text-slate-900 mb-4">{title}</h3>
-      <ResponsiveContainer width="100%" height={250}>
+    <div className={`bg-white rounded-xl shadow-md border border-slate-200 ${compact ? 'p-4' : 'p-6'}`}>
+      <h3 className={`font-semibold text-slate-900 ${compact ? 'text-sm mb-3' : 'text-lg mb-4'}`}>{title}</h3>
+      <ResponsiveContainer width="100%" height={compact ? 180 : 250}>
         <AreaChart data={data}>
           <defs>
             <linearGradient id={`gradient-${color}`} x1="0" y1="0" x2="0" y2="1">
@@ -33,11 +34,11 @@ export default function RealtimeChart({ data, title, color, unit, domain }: Real
             dataKey="timestamp" 
             tickFormatter={(timestamp) => format(new Date(timestamp), 'HH:mm:ss')}
             stroke="#94A3B8"
-            style={{ fontSize: '12px' }}
+            style={{ fontSize: compact ? '10px' : '12px' }}
           />
           <YAxis 
             stroke="#94A3B8"
-            style={{ fontSize: '12px' }}
+            style={{ fontSize: compact ? '10px' : '12px' }}
             domain={domain || ['auto', 'auto']}
           />
           <Tooltip 

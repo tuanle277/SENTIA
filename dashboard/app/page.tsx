@@ -11,7 +11,13 @@ import {
   Gauge,
   Thermometer,
   Loader2,
+  Heart,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
+import Link from 'next/link';
+import CompanionApp from './components/CompanionApp';
+import { IPhoneMockup } from 'react-device-mockup';
 
 type StreamSource = 'simulated' | 'real_all' | 'real_not_stressed' | 'real_stressed';
 
@@ -55,6 +61,7 @@ export default function Dashboard() {
   const [tempHistory, setTempHistory] = useState<ChartDataPoint[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [streamMeta, setStreamMeta] = useState<StreamMeta | null>(null);
+  const [showCompanionApp, setShowCompanionApp] = useState(false);
 
   const connectToStream = useCallback(() => {
     const eventSource = new EventSource('/api/stream');
@@ -147,65 +154,105 @@ export default function Dashboard() {
     <div className="min-h-screen bg-slate-100 flex justify-center">
       <div className="w-full max-w-[1920px] px-8 py-10">
         {/* Header */}
-        <div className="mb-10">
+        <div className={`mb-10 ${showCompanionApp ? 'mb-6' : ''}`}>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-slate-900 mb-2">
+              <h1 className={`font-bold text-slate-900 mb-2 ${showCompanionApp ? 'text-2xl' : 'text-4xl'}`}>
                 Health Dashboard
               </h1>
-              <p className="text-slate-600">Real-time wearable metrics monitoring</p>
+              <p className={`text-slate-600 ${showCompanionApp ? 'text-sm' : ''}`}>Real-time wearable metrics monitoring</p>
             </div>
-            <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${
-                connectionStatus === 'connected' ? 'bg-emerald-500 animate-pulse' : 
-                connectionStatus === 'connecting' ? 'bg-amber-400 animate-pulse' : 
-                'bg-rose-500'
-              }`}></div>
-              <span className="text-slate-600 text-sm capitalize">{connectionStatus}</span>
+            <div className="flex items-center gap-4">
+              {/* <Link
+                href="/companion"
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm"
+              >
+                <Heart className="w-4 h-4" />
+                Companion App
+              </Link> */}
+              <div className="flex items-center gap-2">
+                <div className={`w-3 h-3 rounded-full ${
+                  connectionStatus === 'connected' ? 'bg-emerald-500 animate-pulse' : 
+                  connectionStatus === 'connecting' ? 'bg-amber-400 animate-pulse' : 
+                  'bg-rose-500'
+                }`}></div>
+                <span className="text-slate-600 text-sm capitalize">{connectionStatus}</span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Main Layout: Dashboard + Control Panel */}
         <div className="flex gap-8">
+
+          {/* Companion App */}
+          <div className={`${showCompanionApp ? 'w-auto' : 'w-auto'} flex-shrink-0 flex items-center gap-2`}>
+            {showCompanionApp ? (
+              <div className="sticky top-8 flex items-center justify-center gap-2">
+                <IPhoneMockup screenWidth={380} transparentNavBar={true} statusbarColor="#f9f3f4">
+                  <CompanionApp embedded={true} />
+                </IPhoneMockup>
+                <button
+                  onClick={() => setShowCompanionApp(false)}
+                  className="p-2 flex items-center justify-center bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm"
+                  aria-label="Close Companion App"
+                >
+                  <ChevronRight className="w-6 h-6 text-slate-600" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowCompanionApp(true)}
+                className="p-2 flex items-center justify-center bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm"
+                aria-label="Show Companion App"
+              >
+                <ChevronLeft className="w-6 h-6 text-slate-600" />
+              </button>
+            )}
+          </div>
+          
           {/* Main Dashboard Content */}
           <div className="flex-1 min-w-0">
             {currentData ? (
               <>
             {/* Primary Metrics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-8 ${showCompanionApp ? 'gap-4 mb-6' : 'gap-8'}`}>
               <MetricCard
                 title="Mean Heart Rate"
                 value={(60000 / currentData.hrvMeanNN).toFixed(0)}
                 unit="BPM"
-                icon={<Activity className="w-6 h-6 text-cyan-600" />}
+                icon={<Activity className={`text-cyan-600 ${showCompanionApp ? 'w-4 h-4' : 'w-6 h-6'}`} />}
                 status={getHrvStatus(currentData.hrvMeanNN)}
+                compact={showCompanionApp}
               />
               <MetricCard
                 title="EDA Mean"
                 value={currentData.edaMean.toFixed(3)}
                 unit="uS"
-                icon={<Droplet className="w-6 h-6 text-sky-600" />}
+                icon={<Droplet className={`text-sky-600 ${showCompanionApp ? 'w-4 h-4' : 'w-6 h-6'}`} />}
                 status={getEdaStatus(currentData.edaMean)}
+                compact={showCompanionApp}
               />
               <MetricCard
                 title="ACC Magnitude"
                 value={currentData.accMagMean.toFixed(2)}
                 unit="g"
-                icon={<Gauge className="w-6 h-6 text-violet-600" />}
+                icon={<Gauge className={`text-violet-600 ${showCompanionApp ? 'w-4 h-4' : 'w-6 h-6'}`} />}
                 status={getAccStatus(currentData.accMagMean)}
+                compact={showCompanionApp}
               />
               <MetricCard
-                title="Skin Temperature"
+                title={showCompanionApp ? "Skin Temp" : "Skin Temperature"}
                 value={currentData.tempMean.toFixed(2)}
                 unit="°C"
-                icon={<Thermometer className="w-6 h-6 text-amber-600" />}
+                icon={<Thermometer className={`text-amber-600 ${showCompanionApp ? 'w-4 h-4' : 'w-6 h-6'}`} />}
                 status={getTempStatus(currentData.tempMean)}
+                compact={showCompanionApp}
               />
             </div>
 
             {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className={`grid grid-cols-1 lg:grid-cols-2 ${showCompanionApp ? 'gap-4' : 'gap-8'}`}>
               <RealtimeChart
                 data={hrvHistory.map(point => ({ ...point, value: 60000 / point.value }))}
                 title="Mean Heart Rate Trend"
@@ -215,6 +262,7 @@ export default function Dashboard() {
                   30,
                   200,
                 ]}
+                compact={showCompanionApp}
               />
               <RealtimeChart
                 data={edaHistory}
@@ -225,6 +273,7 @@ export default function Dashboard() {
                   Math.max(0, FEATURE_BASELINES.edaMean.mean - FEATURE_BASELINES.edaMean.std),
                   FEATURE_BASELINES.edaMean.mean + FEATURE_BASELINES.edaMean.std * 3,
                 ]}
+                compact={showCompanionApp}
               />
               <RealtimeChart
                 data={accHistory}
@@ -235,6 +284,7 @@ export default function Dashboard() {
                   FEATURE_BASELINES.accMagMean.mean - FEATURE_BASELINES.accMagMean.std * 2,
                   FEATURE_BASELINES.accMagMean.mean + FEATURE_BASELINES.accMagMean.std * 2,
                 ]}
+                compact={showCompanionApp}
               />
               <RealtimeChart
                 data={tempHistory}
@@ -245,6 +295,7 @@ export default function Dashboard() {
                   30,
                   40,
                 ]}
+                compact={showCompanionApp}
               />
             </div>
 
@@ -262,8 +313,10 @@ export default function Dashboard() {
 
           {/* Activity Control Panel */}
           <div className="w-[420px] flex-shrink-0">
-            <ActivityControlPanel latestFeatures={currentData} streamMeta={streamMeta} />
-            <TimeScaleControl />
+            <div className="sticky top-8">
+              <ActivityControlPanel latestFeatures={currentData} streamMeta={streamMeta} />
+              <TimeScaleControl />
+            </div>
           </div>
         </div>
       </div>
