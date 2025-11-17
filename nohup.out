@@ -1,0 +1,4 @@
+usage: train_.py [-h] [--data DATA] [--out OUT] [--model {rf,cnn}] [--curve]
+                 [--curve_out CURVE_OUT] [--early_warning]
+                 [--early_horizons EARLY_HORIZONS] [--early_out EARLY_OUT]
+train_.py: error: argument --model: invalid choice: 'all' (choose from 'rf', 'cnn')

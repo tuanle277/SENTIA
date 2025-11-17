@@ -1,0 +1,2 @@
+model_type,timestamp,total_subjects,accuracy,precision,recall,f1_score,per_subject_accuracy_variance,per_subject_accuracy_std,per_subject_f1_variance,per_subject_f1_std
+dt,20251013_224610,15,0.7871442961470663,0.7984995652578547,0.7871442961470663,0.7871725797933918,0.03258068507624404,0.18050120519332838,0.04183962231299966,0.2045473595845218

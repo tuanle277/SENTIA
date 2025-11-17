@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
@@ -76,7 +76,11 @@ type AppState =
   | 'EMA_START'
   | 'EMA_QUESTIONING'
   | 'FETCHING_SUGGESTION'
-  | 'SHOWING_SUGGESTION';
+  | 'SHOWING_SUGGESTION'
+  | 'VOICE_CHATBOT'
+  | 'VOICE_RECORDING'
+  | 'VOICE_PROCESSING'
+  | 'VOICE_RESPONSE';
 
 interface Notification {
   id: string;
@@ -95,6 +99,13 @@ interface Suggestion {
   suggestion: string;
 }
 
+interface ChatMessage {
+  id: string;
+  text: string;
+  sender: 'user' | 'bot';
+  timestamp: number;
+}
+
 interface CompanionAppProps {
   embedded?: boolean;
   onClose?: () => void;
@@ -109,6 +120,14 @@ export default function CompanionApp({ embedded = false, onClose }: CompanionApp
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [stressDetected, setStressDetected] = useState(false);
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [chatbotResponse, setChatbotResponse] = useState<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement | null>(null);
 
   const transitionToState = (newState: AppState) => {
     setIsFading(true);
@@ -206,6 +225,28 @@ export default function CompanionApp({ embedded = false, onClose }: CompanionApp
     }
   }, [appState, emaAnswers]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (mediaRecorder && isRecording) {
+        try {
+          if (mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+          }
+        } catch (error) {
+          console.error('Error cleaning up recorder:', error);
+        }
+      }
+    };
+  }, [mediaRecorder, isRecording]);
+
+  // Auto-scroll chat to bottom when new messages arrive
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
   const handleNotificationClick = () => transitionToState('EMA_START');
   const handleStartEma = () => {
     setCurrentQuestionIndex(0);
@@ -236,10 +277,170 @@ export default function CompanionApp({ embedded = false, onClose }: CompanionApp
 
   const handleSkip = () => transitionToState('FETCHING_SUGGESTION');
   const handleReset = () => {
+    // Stop any ongoing recording
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      setIsRecording(false);
+    }
     transitionToState('IDLE');
     setCurrentQuestionIndex(0);
     setEmaAnswers({});
     setSuggestion(null);
+    setChatbotResponse(null);
+    setMediaRecorder(null);
+    setAudioChunks([]);
+    setChatMessages([]);
+    setInputMessage('');
+  };
+
+  const handleStartVoiceChatbot = () => {
+    setChatbotResponse(null);
+    setChatMessages([]);
+    setInputMessage('');
+    transitionToState('VOICE_CHATBOT');
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        stream.getTracks().forEach((track) => track.stop());
+        
+        transitionToState('VOICE_PROCESSING');
+        await processVoiceRecording(audioBlob);
+      };
+
+      recorder.start();
+      setMediaRecorder(recorder);
+      setAudioChunks(chunks);
+      setIsRecording(true);
+      transitionToState('VOICE_RECORDING');
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      alert('Failed to access microphone. Please check permissions.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && isRecording) {
+      try {
+        if (mediaRecorder.state === 'recording') {
+          mediaRecorder.stop();
+        }
+        setIsRecording(false);
+      } catch (error) {
+        console.error('Error stopping recording:', error);
+        setIsRecording(false);
+      }
+    }
+  };
+
+  const addMessage = (text: string, sender: 'user' | 'bot') => {
+    const newMessage: ChatMessage = {
+      id: Date.now().toString(),
+      text,
+      sender,
+      timestamp: Date.now(),
+    };
+    setChatMessages((prev) => [...prev, newMessage]);
+  };
+
+  const sendTextMessage = async (text: string) => {
+    if (!text.trim() || isSending) return;
+
+    setIsSending(true);
+    const userMessageText = text.trim();
+    setInputMessage('');
+
+    try {
+      // Build conversation history for context (previous messages only, before adding current)
+      const history = chatMessages.map((msg) => ({
+        role: msg.sender === 'user' ? 'user' : 'model',
+        text: msg.text,
+      }));
+
+      // Add user message to UI immediately
+      addMessage(userMessageText, 'user');
+
+      const response = await fetch('/api/chatbot/text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessageText,
+          history: history,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get chatbot response');
+      }
+
+      const data = await response.json();
+      addMessage(data.response || 'I\'m here to help. How can I assist you with managing your stress?', 'bot');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const processVoiceRecording = async (audioBlob: Blob) => {
+    try {
+      // Convert audio to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+      
+      reader.onloadend = async () => {
+        const base64Audio = reader.result as string;
+        
+        // Build conversation history for context
+        const history = chatMessages.map((msg) => ({
+          role: msg.sender === 'user' ? 'user' : 'model',
+          text: msg.text,
+        }));
+        
+        // Send to API for transcription and chatbot response
+        const response = await fetch('/api/chatbot/voice', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            audio: base64Audio,
+            history: history,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to process voice recording');
+        }
+
+        const data = await response.json();
+        const userMessage = data.transcription || '[Voice message]';
+        const botResponse = data.response || 'I\'m here to help. How can I assist you with managing your stress?';
+        
+        addMessage(userMessage, 'user');
+        addMessage(botResponse, 'bot');
+        transitionToState('VOICE_CHATBOT');
+      };
+    } catch (error) {
+      console.error('Error processing voice recording:', error);
+      addMessage('Sorry, I encountered an error processing your voice message. Please try again.', 'bot');
+      transitionToState('VOICE_CHATBOT');
+    }
   };
 
   const simulateStressNotification = async () => {
@@ -260,23 +461,21 @@ export default function CompanionApp({ embedded = false, onClose }: CompanionApp
       case 'STRESS_DETECTED':
         return (
           <Card>
-            <h1 className="text-2xl font-bold text-red-600 text-center mb-3 mt-0">
+            <h1 className="text-lg font-semibold text-red-600 text-center mb-2 mt-0">
               🚨 Stress Detected
             </h1>
-            <p className="text-slate-600 text-center mb-7 leading-relaxed max-w-[90%]">
-              Our sensors have detected elevated stress levels. Let's take a moment to check in and
-              find the best way to help you.
+            <p className="text-sm text-slate-600 text-center mb-4 leading-relaxed">
+              Our sensors have detected elevated stress levels. Let's take a moment to check in and find the best way to help you.
             </p>
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-5">
-              <p className="text-sm text-red-900 text-center m-0 leading-relaxed">
-                Your physiological indicators suggest you might be experiencing stress. This is
-                completely normal, and we're here to help.
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+              <p className="text-xs text-red-900 text-center m-0 leading-relaxed">
+                Your physiological indicators suggest you might be experiencing stress. This is completely normal, and we're here to help.
               </p>
             </div>
             <Button title="Let's Check In" onClick={handleStressDetected} />
             <button
               onClick={handleReset}
-              className="bg-transparent border-none text-slate-400 text-sm font-medium text-center cursor-pointer mt-4 px-2 py-2 hover:text-slate-600 transition-colors"
+              className="bg-transparent border-none text-slate-400 text-xs font-medium text-center cursor-pointer mt-3 px-2 py-1 hover:text-slate-600 transition-colors"
             >
               Dismiss
             </button>
@@ -285,24 +484,29 @@ export default function CompanionApp({ embedded = false, onClose }: CompanionApp
       case 'EMA_START':
         return (
           <Card>
-            <h1 className="text-xl font-bold text-slate-900 text-center mb-3 mt-0">
+            <h1 className="text-lg font-semibold text-slate-900 text-center mb-2 mt-0">
               Checking In
             </h1>
-            <p className="text-slate-600 text-center mb-7 leading-relaxed">
-              Let's find the best way to help. A few quick questions will find a personalized
-              suggestion for you.
+            <p className="text-sm text-slate-600 text-center mb-4 leading-relaxed">
+              Choose how you'd like to check in. Answer a few quick questions or talk to our chatbot.
             </p>
-            <Button title="Begin" onClick={handleStartEma} />
+            <Button title="Answer Questions" onClick={handleStartEma} />
+            <Button title="Talk to Chatbot" onClick={handleStartVoiceChatbot} className="bg-indigo-600 hover:bg-indigo-700" />
           </Card>
         );
       case 'EMA_QUESTIONING':
         const question = EMA_QUESTIONS[currentQuestionIndex];
         return (
           <Card key={currentQuestionIndex}>
-            <h2 className="text-xl font-bold text-slate-900 text-center mb-7 mt-0">
-              {question.question}
-            </h2>
-            <div className="w-full">
+            <div className="mb-3">
+              <div className="text-xs text-slate-400 mb-1 text-center">
+                Question {currentQuestionIndex + 1} of {EMA_QUESTIONS.length}
+              </div>
+              <h2 className="text-base font-semibold text-slate-900 text-center mb-0 mt-0">
+                {question.question}
+              </h2>
+            </div>
+            <div className="w-full space-y-2">
               {question.options.map((option, index) => (
                 <Button
                   key={option}
@@ -315,7 +519,7 @@ export default function CompanionApp({ embedded = false, onClose }: CompanionApp
             </div>
             <button
               onClick={handleSkip}
-              className="bg-transparent border-none text-slate-400 text-sm font-medium text-center cursor-pointer mt-4 px-2 py-2 hover:text-slate-600 transition-colors"
+              className="bg-transparent border-none text-slate-400 text-xs font-medium text-center cursor-pointer mt-3 px-2 py-1 hover:text-slate-600 transition-colors"
             >
               Skip
             </button>
@@ -324,43 +528,230 @@ export default function CompanionApp({ embedded = false, onClose }: CompanionApp
       case 'FETCHING_SUGGESTION':
         return (
           <Card>
-            <p className="text-slate-600 text-center mb-5">Analyzing your context...</p>
-            <div className="border-4 border-slate-200 border-t-slate-600 rounded-full w-9 h-9 animate-spin mx-auto my-5" />
+            <p className="text-sm text-slate-600 text-center mb-4">Analyzing your context...</p>
+            <div className="border-2 border-slate-200 border-t-indigo-600 rounded-full w-8 h-8 animate-spin mx-auto" />
           </Card>
         );
       case 'SHOWING_SUGGESTION':
         return (
           <Card>
-            <h1 className="text-xl font-bold text-slate-900 text-center mb-3 mt-0">
+            <h1 className="text-base font-semibold text-slate-900 text-center mb-2 mt-0">
               {suggestion?.title}
             </h1>
-            <p className="text-base text-slate-700 text-center mb-7 leading-relaxed mt-0">
+            <p className="text-sm text-slate-700 text-center mb-4 leading-relaxed">
               {suggestion?.suggestion}
             </p>
             <Button title="Done" onClick={handleReset} />
+          </Card>
+        );
+      case 'VOICE_CHATBOT':
+        return (
+          <Card>
+            <div className="w-full flex items-center justify-between mb-3">
+              <h1 className="text-base font-semibold text-slate-900 m-0">
+                Chat with Bot
+              </h1>
+              <button
+                onClick={() => {
+                  setChatMessages([]);
+                  transitionToState('EMA_START');
+                }}
+                className="bg-transparent border-none text-slate-400 text-xs font-medium cursor-pointer px-2 py-1 hover:text-slate-600 transition-colors"
+              >
+                Back
+              </button>
+            </div>
+            
+            {/* Chat Messages */}
+            <div 
+              ref={chatContainerRef}
+              className="w-full h-56 mb-3 overflow-y-auto border border-slate-200 rounded-lg p-3 bg-slate-50/50 flex flex-col gap-2 scrollbar-thin"
+            >
+              {chatMessages.length === 0 ? (
+                <p className="text-xs text-slate-400 text-center mt-2">
+                  Start a conversation by typing a message or using voice
+                </p>
+              ) : (
+                chatMessages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[85%] rounded-lg px-3 py-2 ${
+                        msg.sender === 'user'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-white text-slate-800 border border-slate-200 shadow-sm'
+                      }`}
+                    >
+                      <p className="text-xs m-0 leading-relaxed">{msg.text}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+              {isSending && (
+                <div className="flex justify-start">
+                  <div className="bg-white text-slate-800 border border-slate-200 rounded-lg px-3 py-2 shadow-sm">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Text Input */}
+            <div className="w-full flex gap-2 mb-3">
+              <input
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendTextMessage(inputMessage);
+                  }
+                }}
+                placeholder="Type your message..."
+                disabled={isSending}
+                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+              />
+              <button
+                onClick={() => sendTextMessage(inputMessage)}
+                disabled={!inputMessage.trim() || isSending}
+                className="px-3 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium"
+              >
+                Send
+              </button>
+            </div>
+
+            {/* Voice Button */}
+            <div className="flex flex-col items-center">
+              <p className="text-xs text-slate-400 mb-1.5">Or press and hold to talk</p>
+              <VoiceButton
+                onPressStart={startRecording}
+                onPressEnd={stopRecording}
+                isRecording={isRecording}
+              />
+            </div>
+          </Card>
+        );
+      case 'VOICE_RECORDING':
+        return (
+          <Card>
+            <div className="w-full flex items-center justify-between mb-3">
+              <h1 className="text-base font-semibold text-slate-900 m-0">
+                Listening...
+              </h1>
+              <button
+                onClick={() => {
+                  if (isRecording) stopRecording();
+                  transitionToState('VOICE_CHATBOT');
+                }}
+                className="bg-transparent border-none text-slate-400 text-xs font-medium cursor-pointer px-2 py-1 hover:text-slate-600 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+            
+            {/* Show chat messages while recording */}
+            <div className="w-full h-40 mb-3 overflow-y-auto border border-slate-200 rounded-lg p-3 bg-slate-50/50 flex flex-col gap-2">
+              {chatMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded-lg px-3 py-2 ${
+                      msg.sender === 'user'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-white text-slate-800 border border-slate-200 shadow-sm'
+                    }`}
+                  >
+                    <p className="text-xs m-0 leading-relaxed">{msg.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-xs text-slate-600 text-center mb-3 leading-relaxed">
+              Keep holding the button and speak. Release when finished.
+            </p>
+            <VoiceButton
+              onPressStart={startRecording}
+              onPressEnd={stopRecording}
+              isRecording={true}
+            />
+            <div className="mt-3 flex items-center justify-center gap-2">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              <span className="text-xs text-slate-600">Recording</span>
+            </div>
+          </Card>
+        );
+      case 'VOICE_PROCESSING':
+        return (
+          <Card>
+            <div className="w-full flex items-center justify-between mb-3">
+              <h1 className="text-base font-semibold text-slate-900 m-0">
+                Processing...
+              </h1>
+            </div>
+            
+            {/* Show chat messages while processing */}
+            <div className="w-full h-40 mb-3 overflow-y-auto border border-slate-200 rounded-lg p-3 bg-slate-50/50 flex flex-col gap-2">
+              {chatMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded-lg px-3 py-2 ${
+                      msg.sender === 'user'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-white text-slate-800 border border-slate-200 shadow-sm'
+                    }`}
+                  >
+                    <p className="text-xs m-0 leading-relaxed">{msg.text}</p>
+                  </div>
+                </div>
+              ))}
+              <div className="flex justify-start">
+                <div className="bg-white text-slate-800 border border-slate-200 rounded-lg px-3 py-2 shadow-sm">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 text-center mb-3">Understanding what you said...</p>
+            <div className="border-2 border-slate-200 border-t-indigo-600 rounded-full w-8 h-8 animate-spin mx-auto" />
           </Card>
         );
       case 'IDLE':
       default:
         return (
           <Card>
-            <h1 className="text-xl font-bold text-slate-900 text-center mb-3 mt-0">
+            <h1 className="text-base font-semibold text-slate-900 text-center mb-2 mt-0">
               Mindwell Companion
             </h1>
-            <p className="text-slate-600 text-center mb-7 leading-relaxed">
-              Your personal guide to moments of calm, triggered by your wearable when you need it
-              most.
+            <p className="text-xs text-slate-600 text-center mb-4 leading-relaxed">
+              Your personal guide to moments of calm, triggered by your wearable when you need it most.
             </p>
 
             {/* System Status */}
             {systemStatus && (
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4">
-                <p className="text-sm text-slate-600 m-0 text-center">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 mb-3">
+                <p className="text-xs text-slate-600 m-0 text-center">
                   Status:{' '}
                   {systemStatus.status === 'running' ? '🟢 Monitoring' : '🔴 Offline'}
                 </p>
                 {systemStatus.pending_notifications > 0 && (
-                  <p className="text-xs text-red-600 m-1 mt-0 text-center font-medium">
+                  <p className="text-xs text-red-600 m-0 mt-1 text-center font-medium">
                     {systemStatus.pending_notifications} notification(s) pending
                   </p>
                 )}
@@ -369,21 +760,21 @@ export default function CompanionApp({ embedded = false, onClose }: CompanionApp
 
             {/* Notifications */}
             {notifications.length > 0 && (
-              <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 mb-4">
-                <h3 className="text-base font-semibold text-amber-900 m-0 mb-3 text-center">
+              <div className="bg-amber-50 border border-amber-300 rounded-lg p-3 mb-3">
+                <h3 className="text-xs font-semibold text-amber-900 m-0 mb-2 text-center">
                   Recent Alerts
                 </h3>
                 {notifications.slice(0, 3).map((notification) => (
                   <div
                     key={notification.id}
-                    className="bg-white border border-slate-200 rounded-lg p-3 mb-2 flex justify-between items-center last:mb-0"
+                    className="bg-white border border-slate-200 rounded-lg p-2 mb-1.5 flex justify-between items-center last:mb-0"
                   >
                     <p className="text-xs text-slate-700 m-0 flex-1 leading-snug">
                       {notification.message}
                     </p>
                     <button
                       onClick={() => acknowledgeNotification(notification.id)}
-                      className="bg-slate-500 text-white border-none rounded-md px-2 py-1 text-xs cursor-pointer ml-2"
+                      className="bg-slate-500 text-white border-none rounded px-2 py-1 text-xs cursor-pointer ml-2 hover:bg-slate-600 transition-colors"
                     >
                       Dismiss
                     </button>
@@ -392,13 +783,12 @@ export default function CompanionApp({ embedded = false, onClose }: CompanionApp
               </div>
             )}
 
-            <div className="mt-5" />
             <Button title="Simulate Stress Notification" onClick={simulateStressNotification} />
             {notifications.length > 0 && (
               <Button
                 title="Clear All Notifications"
                 onClick={clearAllNotifications}
-                className="bg-red-600 mt-2"
+                className="bg-red-600 hover:bg-red-700"
               />
             )}
           </Card>
@@ -434,7 +824,7 @@ export default function CompanionApp({ embedded = false, onClose }: CompanionApp
 
 // --- Reusable Components ---
 const Card = ({ children }: { children: React.ReactNode }) => (
-  <div className="w-full max-w-[380px] bg-white rounded-3xl p-8 flex flex-col items-center justify-center border border-slate-200 shadow-sm box-border mx-auto">
+  <div className="w-full max-w-[420px] bg-white rounded-2xl p-5 flex flex-col border border-slate-200/60 shadow-sm box-border mx-auto">
     {children}
   </div>
 );
@@ -451,11 +841,77 @@ const Button = ({
   style?: React.CSSProperties;
 }) => (
   <button
-    className={`w-full bg-slate-900 py-4 rounded-xl mt-2.5 text-white text-center text-sm font-medium border-none cursor-pointer shadow-sm transition-all duration-200 hover:bg-slate-800 hover:-translate-y-0.5 active:translate-y-0 ${className}`}
+    className={`w-full bg-slate-900 py-2.5 px-4 rounded-lg mt-2 text-white text-center text-sm font-medium border-none cursor-pointer shadow-sm transition-all duration-200 hover:bg-slate-800 active:scale-[0.98] ${className}`}
     onClick={onClick}
     style={style}
   >
     {title}
   </button>
 );
+
+const VoiceButton = ({
+  onPressStart,
+  onPressEnd,
+  isRecording,
+}: {
+  onPressStart: () => void;
+  onPressEnd: () => void;
+  isRecording: boolean;
+}) => {
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onPressStart();
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onPressEnd();
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isRecording) {
+      onPressEnd();
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    onPressStart();
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault();
+    onPressEnd();
+  };
+
+  return (
+    <button
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      className={`
+        w-20 h-20 rounded-full border-none cursor-pointer shadow-md
+        transition-all duration-200 flex items-center justify-center
+        ${isRecording
+          ? 'bg-red-500 hover:bg-red-600 scale-105 animate-pulse'
+          : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95'
+        }
+      `}
+      style={{ touchAction: 'none' }}
+    >
+      <svg
+        className="w-8 h-8 text-white"
+        fill="currentColor"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+      </svg>
+    </button>
+  );
+};
 
