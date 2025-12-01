@@ -10,6 +10,7 @@ const EMA_QUESTIONS = [
       "Commuting",
       "Socializing",
       "Relaxing",
+      "Exercising",
       "Chores",
     ],
   },
@@ -20,51 +21,257 @@ const EMA_QUESTIONS = [
   },
   {
     id: "location",
-    question: "How would you describe your environment?",
-    options: ["Home", "Work/School", "Public Space", "Outdoors"],
+    question: "Where are you?",
+    options: ["Home", "Work/School", "Outdoors", "Public Space"],
+  },
+  {
+    id: "stress_level",
+    question: "How stressed do you feel right now?",
+    options: [
+      "Not stressed",
+      "Slightly stressed",
+      "Moderately stressed",
+      "Very stressed",
+      "Extremely stressed",
+    ],
+  },
+  {
+    id: "mood",
+    question: "How would you describe your current mood?",
+    options: [
+      "Very negative",
+      "Somewhat negative",
+      "Neutral",
+      "Somewhat positive",
+      "Very positive",
+    ],
+  },
+  {
+    id: "energy_level",
+    question: "How energetic do you feel right now?",
+    options: [
+      "Very low energy",
+      "Low energy",
+      "Moderate energy",
+      "High energy",
+      "Very high energy",
+    ],
+  },
+  {
+    id: "physical_wellbeing",
+    question: "How are you feeling physically right now?",
+    options: [
+      "Very unwell",
+      "Somewhat unwell",
+      "Neutral",
+      "Somewhat well",
+      "Very well",
+    ],
+  },
+  {
+    id: "focus_level",
+    question: "How focused do you feel right now?",
+    options: [
+      "Very unfocused",
+      "Somewhat unfocused",
+      "Moderately focused",
+      "Very focused",
+      "Extremely focused",
+    ],
   },
 ];
 
+// --- Interactive Activity Configurations ---
+const ACTIVITY_CONFIGS = {
+  breathing: {
+    name: "Breathing Exercise",
+    duration: 300, // 5 minutes
+    steps: [
+      { instruction: "Find a comfortable position", duration: 10 },
+      { instruction: "Breathe in slowly for 4 counts", duration: 4 },
+      { instruction: "Hold your breath for 4 counts", duration: 4 },
+      { instruction: "Breathe out slowly for 6 counts", duration: 6 },
+      { instruction: "Repeat this cycle", duration: 0 },
+    ],
+    cycleCount: 5,
+  },
+  stretching: {
+    name: "Gentle Stretching",
+    duration: 180, // 3 minutes
+    steps: [
+      { instruction: "Stand up and stretch your arms overhead", duration: 15 },
+      { instruction: "Gently roll your shoulders back", duration: 10 },
+      { instruction: "Stretch your arms to the sides", duration: 15 },
+      { instruction: "Gently twist your torso left and right", duration: 20 },
+      { instruction: "Take a deep breath and relax", duration: 10 },
+    ],
+  },
+  meditation: {
+    name: "Mindful Pause",
+    duration: 120, // 2 minutes
+    steps: [
+      { instruction: "Close your eyes or soften your gaze", duration: 10 },
+      { instruction: "Notice your breathing naturally", duration: 30 },
+      { instruction: "Focus on the present moment", duration: 30 },
+      {
+        instruction: "Gently return your attention to your breath",
+        duration: 30,
+      },
+      { instruction: "Slowly open your eyes", duration: 20 },
+    ],
+  },
+  movement: {
+    name: "Energy Boost",
+    duration: 60, // 1 minute
+    steps: [
+      { instruction: "Do 10 jumping jacks or arm circles", duration: 30 },
+      { instruction: "Take a deep breath", duration: 5 },
+      { instruction: "Shake out your arms and legs", duration: 15 },
+      { instruction: "Take another deep breath", duration: 10 },
+    ],
+  },
+};
+
 // --- Mock Backend/Model Logic ---
 const getSuggestionFromModel = (context) => {
-  const { activity, social, location } = context;
+  const {
+    activity,
+    social,
+    location,
+    stress_level,
+    mood,
+    energy_level,
+    physical_wellbeing,
+    focus_level,
+  } = context;
+
+  // Priority 1: Critical health/stress situations (immediate convergence)
   if (
-    activity === "Working/Studying" &&
-    (location === "Work/School" || location === "Home")
+    stress_level === "Extremely stressed" ||
+    physical_wellbeing === "Very unwell"
   ) {
-    return social === "Alone"
-      ? {
-          title: "Discreet Focus Reset",
-          suggestion:
-            "Place your hand flat on your desk. Focus on the cool, solid feeling for 60 seconds. This simple grounding technique can pull you back to the present moment without breaking your workflow.",
-        }
-      : {
-          title: "Silent Breathing Anchor",
-          suggestion:
-            "Try a subtle breathing exercise. Inhale slowly for 4 seconds, and exhale for 6. It's completely silent and helps calm the nervous system, even if you're around others.",
-        };
-  }
-  if (activity === "Commuting") {
     return {
-      title: "Mindful Commute",
+      title: "Emergency Relief",
       suggestion:
-        "Put on a calming podcast or instrumental playlist. Focus on the sounds and try to loosen your grip if you're driving or holding onto a rail. Let the journey be a moment of transition.",
+        "Let's do a guided breathing exercise to help you reset. This will take about 5 minutes.",
+      activityType: "breathing",
     };
   }
-  if (activity === "Socializing") {
+
+  // Priority 2: High stress + low energy (converges in 2-3 turns)
+  if (stress_level === "Very stressed" && energy_level === "Very low energy") {
     return {
-      title: "Grounding in the Moment",
+      title: "Energy & Stress Reset",
+      suggestion:
+        "Let's do some gentle stretching to help reduce stress and boost energy naturally.",
+      activityType: "stretching",
+    };
+  }
+
+  // Priority 3: Low energy + unfocused (converges in 2-3 turns)
+  if (energy_level === "Very low energy" && focus_level === "Very unfocused") {
+    return {
+      title: "Energy Boost",
+      suggestion:
+        "Let's do some quick movement exercises to boost your energy and focus.",
+      activityType: "movement",
+    };
+  }
+
+  // Priority 4: Very negative mood (converges in 2-3 turns)
+  if (mood === "Very negative") {
+    return {
+      title: "Gentle Mood Lift",
+      suggestion:
+        "Let's do a mindful pause to help shift your emotional state. This will take about 2 minutes.",
+      activityType: "meditation",
+    };
+  }
+
+  // Priority 5: Activity + context combinations (converges in 3-4 turns)
+  if (activity === "Working/Studying" && focus_level === "Very unfocused") {
+    return social === "Alone"
+      ? {
+          title: "Focus Reset",
+          suggestion:
+            "Place your hand flat on your desk. Focus on the cool, solid feeling for 60 seconds. This simple grounding technique can pull you back to the present moment.",
+        }
+      : {
+          title: "Silent Focus Anchor",
+          suggestion:
+            "Try a subtle breathing exercise. Inhale slowly for 4 seconds, and exhale for 6. It's completely silent and helps calm the nervous system.",
+        };
+  }
+
+  if (activity === "Exercising" && physical_wellbeing === "Somewhat unwell") {
+    return {
+      title: "Listen to Your Body",
+      suggestion:
+        "Your body is telling you something. Consider reducing intensity or taking a break. It's okay to adjust your workout based on how you feel.",
+    };
+  }
+
+  if (activity === "Relaxing" && mood === "Very positive") {
+    return {
+      title: "Savor the Moment",
+      suggestion:
+        "You're in a good mood and relaxing - that's wonderful! Take a moment to notice what's contributing to this positive feeling and let it fill you up.",
+    };
+  }
+
+  // Priority 6: Location-based suggestions (converges in 4-5 turns)
+  if (location === "Outdoors" && energy_level === "High energy") {
+    return {
+      title: "Nature Energy",
+      suggestion:
+        "You're outdoors with good energy - perfect! Take a few deep breaths and notice the natural environment around you. Let it ground you in the present moment.",
+    };
+  }
+
+  if (location === "Work/School" && stress_level === "Moderately stressed") {
+    return {
+      title: "Work Stress Relief",
+      suggestion:
+        "Take a 2-minute break. Step away from your desk, stretch your arms overhead, and take three deep breaths. Small breaks can make a big difference.",
+    };
+  }
+
+  // Priority 7: Social context (converges in 5-6 turns)
+  if (social === "With Coworkers" && stress_level === "Slightly stressed") {
+    return {
+      title: "Social Grounding",
       suggestion:
         "If you feel overwhelmed, subtly focus on one thing you can hear in your environment. Let it be an anchor. You don't have to leave the conversation, just find a single point of focus.",
     };
   }
-  if (activity === "Relaxing" && location === "Home") {
+
+  // Priority 8: Activity-based defaults (converges in 6-8 turns)
+  if (activity === "Commuting") {
     return {
-      title: "Deepen Your Relaxation",
+      title: "Mindful Commute",
       suggestion:
-        "Since you're already relaxing at home, enhance it. Try a 5-minute guided meditation or simply listen to one of your favorite, most comforting songs.",
+        "Put on a calming podcast or instrumental playlist. Focus on the sounds and try to loosen your grip if you're driving or holding onto a rail.",
     };
   }
+
+  if (activity === "Chores" && energy_level === "Low energy") {
+    return {
+      title: "Chore Energy",
+      suggestion:
+        "Try putting on some upbeat music while you work. Music can help boost energy and make tasks feel more enjoyable.",
+    };
+  }
+
+  // Priority 9: General mood/energy combinations (converges in 7-9 turns)
+  if (mood === "Somewhat negative" && energy_level === "Moderate energy") {
+    return {
+      title: "Mood Shift",
+      suggestion:
+        "Try a quick mood boost: think of one thing you're grateful for, or do something small that usually makes you smile.",
+    };
+  }
+
+  // Priority 10: Default fallback (converges in 8-10 turns)
   return {
     title: "A Mindful Pause",
     suggestion:
@@ -86,12 +293,46 @@ export default function App() {
   const [stressDetected, setStressDetected] = useState(false);
   const [systemStatus, setSystemStatus] = useState(null);
 
+  // Interactive activity states
+  const [activityType, setActivityType] = useState(null);
+  const [activityStep, setActivityStep] = useState(0);
+  const [activityTimer, setActivityTimer] = useState(0);
+  const [activityInstructions, setActivityInstructions] = useState([]);
+
   const transitionToState = (newState) => {
     setIsFading(true);
     setTimeout(() => {
       setAppState(newState);
       setIsFading(false);
     }, 300); // This delay should match the CSS transition duration
+  };
+
+  // Interactive activity functions
+  const startActivity = (type) => {
+    setActivityType(type);
+    setActivityStep(0);
+    setActivityTimer(0);
+    setActivityInstructions(ACTIVITY_CONFIGS[type].steps);
+    transitionToState("ACTIVITY_GUIDE");
+  };
+
+  const nextActivityStep = () => {
+    const config = ACTIVITY_CONFIGS[activityType];
+    if (activityStep < config.steps.length - 1) {
+      setActivityStep(activityStep + 1);
+      setActivityTimer(0);
+    } else {
+      // Activity completed
+      transitionToState("ACTIVITY_COMPLETE");
+    }
+  };
+
+  const skipActivity = () => {
+    transitionToState("IDLE");
+    setActivityType(null);
+    setActivityStep(0);
+    setActivityTimer(0);
+    setActivityInstructions([]);
   };
 
   // --- API Functions ---
@@ -173,10 +414,38 @@ export default function App() {
       setTimeout(() => {
         const result = getSuggestionFromModel(emaAnswers);
         setSuggestion(result);
-        transitionToState("SHOWING_SUGGESTION");
+        if (result.activityType) {
+          // Start interactive activity
+          startActivity(result.activityType);
+        } else {
+          // Show regular suggestion
+          transitionToState("SHOWING_SUGGESTION");
+        }
       }, 1500);
     }
   }, [appState, emaAnswers]);
+
+  // Timer for activities
+  useEffect(() => {
+    let interval;
+    if (
+      appState === "ACTIVITY_GUIDE" &&
+      activityInstructions[activityStep]?.duration > 0
+    ) {
+      interval = setInterval(() => {
+        setActivityTimer((prev) => {
+          const currentStep = activityInstructions[activityStep];
+          if (prev >= currentStep.duration - 1) {
+            // Auto-advance to next step
+            nextActivityStep();
+            return 0;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [appState, activityStep, activityInstructions]);
 
   const handleNotificationClick = () => transitionToState("EMA_START");
   const handleStartEma = () => {
@@ -289,6 +558,62 @@ export default function App() {
             <h1 style={styles.title}>{suggestion.title}</h1>
             <p style={styles.suggestionText}>{suggestion.suggestion}</p>
             <Button title="Done" onClick={handleReset} />
+          </Card>
+        );
+      case "ACTIVITY_GUIDE":
+        const currentStep = activityInstructions[activityStep];
+        const config = ACTIVITY_CONFIGS[activityType];
+        return (
+          <Card>
+            <h1 style={styles.title}>{config.name}</h1>
+            <p style={styles.subtitle}>
+              Step {activityStep + 1} of {activityInstructions.length}
+            </p>
+            <div style={styles.activityContainer}>
+              <p style={styles.activityInstruction}>
+                {currentStep.instruction}
+              </p>
+              {currentStep.duration > 0 && (
+                <div style={styles.timerContainer}>
+                  <div style={styles.timer}>
+                    {currentStep.duration - activityTimer}
+                  </div>
+                  <p style={styles.timerLabel}>seconds</p>
+                </div>
+              )}
+            </div>
+            <div style={styles.activityButtons}>
+              <Button
+                title={
+                  activityStep === activityInstructions.length - 1
+                    ? "Complete"
+                    : "Next Step"
+                }
+                onClick={nextActivityStep}
+              />
+              <button
+                onClick={skipActivity}
+                className="skip-button"
+                style={styles.skipButton}
+              >
+                Skip Activity
+              </button>
+            </div>
+          </Card>
+        );
+      case "ACTIVITY_COMPLETE":
+        return (
+          <Card>
+            <h1 style={styles.title}>🎉 Activity Complete!</h1>
+            <p style={styles.subtitle}>
+              Great job! You've completed the{" "}
+              {ACTIVITY_CONFIGS[activityType].name}.
+            </p>
+            <p style={styles.suggestionText}>
+              How do you feel now? Take a moment to notice any changes in your
+              mood or energy.
+            </p>
+            <Button title="Continue" onClick={handleReset} />
           </Card>
         );
       case "IDLE":
@@ -590,5 +915,42 @@ const styles = {
   clearButton: {
     backgroundColor: "#dc2626",
     marginTop: 8,
+  },
+  activityContainer: {
+    backgroundColor: "#f8fafc",
+    border: "1px solid #e2e8f0",
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  activityInstruction: {
+    fontSize: 18,
+    color: "#1f2937",
+    marginBottom: 16,
+    lineHeight: 1.6,
+    fontWeight: "500",
+  },
+  timerContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    marginTop: 16,
+  },
+  timer: {
+    fontSize: 48,
+    fontWeight: "700",
+    color: "#3b82f6",
+    marginBottom: 4,
+  },
+  timerLabel: {
+    fontSize: 14,
+    color: "#6b7280",
+    margin: 0,
+  },
+  activityButtons: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
   },
 };
