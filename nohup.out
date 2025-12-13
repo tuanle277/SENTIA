@@ -1,0 +1,6 @@
+--- Loading Processed Feature Dataset ---
+Dataset loaded successfully with shape: (19360, 93)
+Dropped 3476 rows with non-numeric or missing values.
+
+--- Starting Leave-One-Subject-Out CV across 15 subjects (model=rf) ---
+Fitting 5 folds for each of 30 candidates, totalling 150 fits

@@ -121,38 +121,155 @@ def process_subject_data(subject_id, base_path, window_size_sec=1, window_shift_
     
     return subject_features_list
 
-# --- Main script execution block ---
-if __name__ == '__main__':
-    WESAD_BASE_PATH = "./data/WESAD"
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(current_dir, '..', '..', 'data', 'processed')
-    os.makedirs(output_dir, exist_ok=True)
-    output_filename = os.path.join(output_dir, "features_dataset.csv")
+# # --- Main script execution block ---
+# if __name__ == '__main__':
+#     WESAD_BASE_PATH = "./data/WESAD"
+#     current_dir = os.path.dirname(os.path.abspath(__file__))
+#     output_dir = os.path.join(current_dir, '..', '..', 'data', 'processed')
+#     os.makedirs(output_dir, exist_ok=True)
+#     output_filename = os.path.join(output_dir, "features_dataset.csv")
 
-    SUBJECT_IDS = [x for x in range(2, 18) if x != 12]
-    all_subjects_features_list = []
+#     SUBJECT_IDS = [x for x in range(2, 18) if x != 12]
+#     all_subjects_features_list = []
 
-    print("Starting final feature extraction for all subjects...")
-    for sid in SUBJECT_IDS:
-        subject_features = process_subject_data(sid, WESAD_BASE_PATH)
-        all_subjects_features_list.extend(subject_features)
+#     print("Starting final feature extraction for all subjects...")
+#     for sid in SUBJECT_IDS:
+#         subject_features = process_subject_data(sid, WESAD_BASE_PATH)
+#         all_subjects_features_list.extend(subject_features)
         
-    final_dataset = pd.DataFrame(all_subjects_features_list)
+#     final_dataset = pd.DataFrame(all_subjects_features_list)
     
-    print("\n--- Feature Extraction Complete! ---")
-    print("\nFinal Feature Dataset Head:")
-    print(final_dataset.head())
-    print(f"\nDataset Shape: {final_dataset.shape}")
-    print(f"\nLabel Distribution (0=Neutral, 1=Stress):\n{final_dataset['label'].value_counts(normalize=True)}")
-    print(f"\nNaN values per column:")
-    print(final_dataset.isnull().sum())
+#     print("\n--- Feature Extraction Complete! ---")
+#     print("\nFinal Feature Dataset Head:")
+#     print(final_dataset.head())
+#     print(f"\nDataset Shape: {final_dataset.shape}")
+#     print(f"\nLabel Distribution (0=Neutral, 1=Stress):\n{final_dataset['label'].value_counts(normalize=True)}")
+#     print(f"\nNaN values per column:")
+#     print(final_dataset.isnull().sum())
     
-    # Now, we drop any rows that have missing values from failed EDA processing
-    # Only drop rows where EDA features are NaN (the ones that actually failed)
-    final_dataset_clean = final_dataset.dropna(subset=['EDA_Mean', 'SCR_Peaks_N'])
-    print(f"\nDataset Shape after dropping EDA NaN: {final_dataset_clean.shape}")
-    print(f"\nLabel Distribution after cleaning (0=Neutral, 1=Stress):\n{final_dataset_clean['label'].value_counts(normalize=True)}")
+#     # Now, we drop any rows that have missing values from failed EDA processing
+#     # Only drop rows where EDA features are NaN (the ones that actually failed)
+#     final_dataset_clean = final_dataset.dropna(subset=['EDA_Mean', 'SCR_Peaks_N'])
+#     print(f"\nDataset Shape after dropping EDA NaN: {final_dataset_clean.shape}")
+#     print(f"\nLabel Distribution after cleaning (0=Neutral, 1=Stress):\n{final_dataset_clean['label'].value_counts(normalize=True)}")
     
-    final_dataset_clean.to_csv(output_filename, index=False)
-    print(f"\nFeature dataset saved successfully to: {output_filename}")
+#     final_dataset_clean.to_csv(output_filename, index=False)
+#     print(f"\nFeature dataset saved successfully to: {output_filename}")
 
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle, FancyArrow
+
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle, FancyArrow
+
+
+def add_box(ax, center, text, width=4.4, height=1.2):
+    """Draw a centered box with label text."""
+    x, y = center
+    ll = (x - width / 2, y - height / 2)
+    rect = Rectangle(ll, width, height,
+                     edgecolor="black",
+                     facecolor="white")
+    ax.add_patch(rect)
+    ax.text(x, y, text, ha="center", va="center", fontsize=10)
+    return rect
+
+
+def add_arrow(ax, start, end):
+    """Draw arrow from start (x,y) to end (x,y)."""
+    sx, sy = start
+    ex, ey = end
+    arr = FancyArrow(
+        sx, sy,
+        ex - sx, ey - sy,
+        width=0.02,
+        head_width=0.25,
+        head_length=0.2,
+        length_includes_head=True
+    )
+    ax.add_patch(arr)
+
+
+def draw_experimentation_diagram(save_path=None):
+    fig, ax = plt.subplots(figsize=(10, 7))
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 10)
+    ax.axis("off")
+
+    # Positions
+    dataset_pos = (5, 8.5)
+    pipeline_pos = (5, 6.0)
+    standard_pos = (2.0, 3.0)
+    early_pos = (5.0, 3.0)
+    lc_pos = (8.0, 3.0)
+
+    # Top: merged dataset
+    add_box(
+        ax,
+        dataset_pos,
+        "Merged Dataset\n(29,800 windows, 74 subjects)"
+    )
+
+    # Middle: shared training pipeline
+    add_box(
+        ax,
+        pipeline_pos,
+        "Shared Training Pipeline\n"
+        "• LOSO CV\n"
+        "• Baseline normalization\n"
+        "• RF / CNN-LSTM\n"
+        "• Calibration + τ"
+    )
+
+    # Arrow dataset -> pipeline
+    add_arrow(ax, (5, 7.9), (5, 6.7))
+
+    # Bottom row: three experiment types
+    add_box(
+        ax,
+        standard_pos,
+        "Standard Stress Detection\n"
+        "• Input: $X_t$\n"
+        "• Target: $y_t$\n"
+        "• Metrics: Acc, F1, AUROC"
+    )
+
+    add_box(
+        ax,
+        early_pos,
+        "Early-Warning Prediction\n"
+        "• Input: $X_t$\n"
+        "• Target: $y_{t+h}$\n"
+        "• Horizons: 1,3,5,10"
+    )
+
+    add_box(
+        ax,
+        lc_pos,
+        "Learning Curve Analysis\n"
+        "• Train fraction: 10–90%\n"
+        "• Fixed val split\n"
+        "• F1 vs data size"
+    )
+
+    # Arrows pipeline -> experiment boxes
+    add_arrow(ax, (5, 5.3), standard_pos)
+    add_arrow(ax, (5, 5.3), early_pos)
+    add_arrow(ax, (5, 5.3), lc_pos)
+
+    # Title
+    ax.set_title(
+        "Experimentation Overview: Three Evaluation Modes",
+        fontsize=13,
+        fontweight="bold",
+        pad=15
+    )
+
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path, dpi=200, bbox_inches="tight")
+    plt.show()
+
+
+if __name__ == "__main__":
+    draw_experimentation_diagram(save_path="experimentation_diagram.png")
